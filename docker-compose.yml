@@ -63,6 +63,4 @@ services:
     env_file:
       - .env
       - .env.local
-
-volumes:
-  mg_import:
+      

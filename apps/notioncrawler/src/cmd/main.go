@@ -14,20 +14,6 @@ import (
 	"time"
 )
 
-const (
-	token       = "secret_c6vmUvoXD96zIBFolSK0f4wNgu6j1n1MFxZZMDQitGf"
-	tokenv2     = ""
-	spaceId     = "3abc121b-7cb1-477b-942d-5404c70daf67"
-	startPageId = "297883f9bc6c49f4bcf9d42dbe8fe969"
-)
-
-func defaultEnv(key string, fallback string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
-	}
-	return fallback
-}
-
 func mustEnv(key string) string {
 	if val := os.Getenv(key); val != "" {
 		return val
@@ -41,6 +27,7 @@ func main() {
 	tokenv2 := mustEnv("TOKEN_V2")
 	spaceId := mustEnv("SPACE_ID")
 	startPageId := mustEnv("START_PAGE_ID")
+	qdrantHost := mustEnv("QDRANT_HOST")
 
 	dbUri := "bolt://localhost:7687"
 	driver, err := neo4j.NewDriverWithContext(dbUri, neo4j.BasicAuth("username", "password", ""))
