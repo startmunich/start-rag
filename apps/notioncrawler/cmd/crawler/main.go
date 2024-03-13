@@ -51,9 +51,16 @@ func main() {
 		Password: neo4jPass,
 	}
 
+	downloadDir, err := os.MkdirTemp("", "notioncrawler_download")
+	if err != nil {
+		panic("Failed to create temp download folder")
+	}
+	defer os.RemoveAll(downloadDir)
+
 	notionClient := notion.New(notion.Options{
 		NotionSpaceId: spaceId,
 		Token:         tokenv2,
+		DownloadDir:   downloadDir,
 	})
 
 	// USE Exporter to crawl children

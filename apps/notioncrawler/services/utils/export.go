@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"notioncrawl/services/notion"
-	"path/filepath"
 	"time"
 )
 
@@ -31,18 +30,17 @@ func ExportZip(client *notion.Client, options notion.ExportOptions) (string, err
 		now.Format("2006-01-02_15-04-05"),
 	)
 
-	log.Printf("Downloaded export will be saved to: %s", ExportDirectory)
 	log.Println("fileName:", fileName)
 
-	downloadPath := filepath.Join(ExportDirectory, fileName)
-	downloadedFile, err := client.DownloadToFile(downloadLink, downloadPath)
+	dFile, dPath, err := client.DownloadToFile(downloadLink, fileName)
+	log.Printf("--- %s ---", dPath)
 	if err != nil {
 		log.Printf("Could not download file: %v", err)
 		return "", err
 	}
 
-	log.Printf("Download finished: %s", downloadedFile.Name())
-	return downloadPath, nil
+	log.Printf("Download finished: %s", dFile.Name())
+	return dPath, nil
 }
 
 func ExportExtracted(client *notion.Client, options notion.ExportOptions) (string, error) {

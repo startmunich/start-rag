@@ -5,6 +5,7 @@ import "strings"
 type Options struct {
 	Token         string
 	NotionSpaceId string
+	DownloadDir   string
 }
 
 type ResourceType string

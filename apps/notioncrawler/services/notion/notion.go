@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -46,10 +47,11 @@ func New(options Options) *Client {
 	return nc
 }
 
-func (c *Client) DownloadToFile(url string, downloadPath string) (*os.File, error) {
+func (c *Client) DownloadToFile(url string, fileName string) (*os.File, string, error) {
+	downloadPath := filepath.Join(c.options.DownloadDir, fileName)
 	out, err := os.Create(downloadPath)
 	if err != nil {
-		return nil, err
+		return nil, downloadPath, err
 	}
 	defer out.Close()
 
@@ -58,7 +60,7 @@ func (c *Client) DownloadToFile(url string, downloadPath string) (*os.File, erro
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, downloadPath, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -66,15 +68,15 @@ func (c *Client) DownloadToFile(url string, downloadPath string) (*os.File, erro
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, downloadPath, err
 	}
 	defer resp.Body.Close()
 
 	if _, err := io.Copy(out, resp.Body); err != nil {
-		return nil, err
+		return nil, downloadPath, err
 	}
 
-	return out, nil
+	return out, downloadPath, nil
 }
 
 func (c *Client) LoadPageBlock(id string) (*PageChunkBlock, error) {
