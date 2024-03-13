@@ -59,10 +59,10 @@ services:
     depends_on:
       - qdrant
     environment:
-      TOKEN_V2: "***"
-      SPACE_ID: 3abc121b-7cb1-477b-942d-5404c70daf67
-      START_PAGE_ID: 297883f9bc6c49f4bcf9d42dbe8fe969
       QDRANT_HOST: qdrant
+    env_file:
+      - .env
+      - .env.local
 
 volumes:
   mg_import:

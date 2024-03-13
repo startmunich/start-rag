@@ -16,29 +16,31 @@ import (
 
 const (
 	token       = "secret_c6vmUvoXD96zIBFolSK0f4wNgu6j1n1MFxZZMDQitGf"
-	tokenv2     = "v02%3Auser_token_or_cookies%3AJwlDvqdWyhbvCvwDtcmw4JS14Q_g7x7kKHFmITtOdWcG7WZf2pyXhaVx4ci3Nmp1Zu0spN1j_peq6UsZrq70LVtra9IiYftffflqVMpb0YHXfPgPzzCx2ucQjhsCcrXYmD5W"
+	tokenv2     = ""
 	spaceId     = "3abc121b-7cb1-477b-942d-5404c70daf67"
 	startPageId = "297883f9bc6c49f4bcf9d42dbe8fe969"
 )
 
 func defaultEnv(key string, fallback string) string {
-	if val := os.Getenv("APP_ENV"); val != "" {
+	if val := os.Getenv(key); val != "" {
 		return val
 	}
 	return fallback
 }
 
 func mustEnv(key string) string {
-	if val := os.Getenv("APP_ENV"); val != "" {
+	if val := os.Getenv(key); val != "" {
 		return val
 	}
-	panic(fmt.Sprintf("Missing environment variable '%s'"))
+	panic(fmt.Sprintf("Missing required environment variable '%s'", key))
 }
 
 func main() {
 	start := time.Now()
 
-	tokenv2 := defaultEnv("APP_ENV")
+	tokenv2 := mustEnv("TOKEN_V2")
+	spaceId := mustEnv("SPACE_ID")
+	startPageId := mustEnv("START_PAGE_ID")
 
 	dbUri := "bolt://localhost:7687"
 	driver, err := neo4j.NewDriverWithContext(dbUri, neo4j.BasicAuth("username", "password", ""))
