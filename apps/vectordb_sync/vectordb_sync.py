@@ -120,8 +120,9 @@ def process_queue():
                 )
                 
         else:
-            # wait 5 minutes before checking the queue again
-            time.sleep(300)
+            # wait 10 seconds before checking the queue again
+            print("Queue is empty, waiting for 10 seconds")
+            time.sleep(10)
 
 
 
@@ -131,8 +132,10 @@ def enqueue_ids():
     if 'ids' in data:
         for id_to_enqueue in data['ids']:
             id_queue.put(id_to_enqueue)
+            print(f"ID {id_to_enqueue} enqueued successfully")
         return jsonify({"message": "IDs enqueued successfully"}), 200
     else:
+        print("No IDs provided")
         return jsonify({"error": "No IDs provided"}), 400
 
 
