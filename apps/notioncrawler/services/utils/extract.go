@@ -13,7 +13,7 @@ import (
 
 const (
 	ExportFileName  = "notion_dump"
-	ExportDirectory = "/Users/khadim/dev/notioncrawler/data"
+	ExportDirectory = "data"
 )
 
 func ExtractExportZip(file string) (string, error) {

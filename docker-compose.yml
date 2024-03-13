@@ -51,8 +51,8 @@ services:
     restart: always
     image: neo4j:5.17
     volumes:
-      - '$HOME/neo4j/data:/data'
-      - '$HOME/neo4j/conf/:/conf/'
+      - '$HOME/startgpt/neo4j/data:/data'
+      - '$HOME/startgpt/neo4j/conf/:/conf/'
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -71,6 +71,8 @@ services:
     build:
       context: ./apps/notioncrawler
       dockerfile: Dockerfile
+    volumes:
+      - '$HOME/startgpt/notioncrawler/data:/data'
     depends_on:
       - neo4j
     environment:
