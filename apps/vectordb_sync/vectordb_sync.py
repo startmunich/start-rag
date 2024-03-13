@@ -14,6 +14,7 @@ from langchain_community.document_loaders.csv_loader import CSVLoader
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import PointStruct
 import threading
+import json
 import queue
 import time
 import os
@@ -62,10 +63,14 @@ def process_queue():
             id_to_process = id_queue.get()
             with neo4j_driver.session() as session:
                 result = session.run(
-                    "MATCH (n:Node {id: $id}) RETURN n.content AS content",
+                    "MATCH (n:CrawledPage {page_id: $id}) RETURN n.content AS content",
                     id=id_to_process,
                 )
-                content = result.single()["content"]
+                app.logger.info('result of session run')
+                record = result.single()
+                app.logger.info(record)
+                record_content = record.get("content")
+                content = json.loads(record_content)
 
                 complete_content = []
 
@@ -73,7 +78,7 @@ def process_queue():
                     # check if content_type is markdown or database
                     if element['content_type'] == 'markdown':
                         # apply markdown_splitter and add to complete_content
-                        complete_content.append(markdown_splitter.split(element['content']))
+                        complete_content += markdown_splitter.split_text(element['content'])
                     elif element['content_type'] == 'database':
                         # create temp csv file and apply csv_loader and add to complete_content
                         with open('temp.csv', 'w') as file:
@@ -83,7 +88,7 @@ def process_queue():
                         for document in csv_loader.load():
                             database_elements.append(document.page_content)
                         database_content = "\n\n".join(database_elements)
-                        complete_content.append(text_splitter.split_text(database_content))
+                        complete_content += text_splitter.split_text(database_content)
                     else:
                         continue
 
