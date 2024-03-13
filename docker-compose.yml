@@ -63,7 +63,7 @@ services:
       - server.memory.heap.max_size=2G
       - server.default_listen_address=0.0.0.0
       - initial.dbms.default_database=neo4j
-      #- NEO4J_AUTH=neo4j/neo4j
+      - NEO4J_AUTH=neo4j/redbull_wildberry
 
   notioncrawler:
     platform: "linux/amd64"
@@ -78,7 +78,7 @@ services:
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j
-      NEO4J_PASS: neo4j
+      NEO4J_PASS: redbull_wildberry
       VECTOR_QUEUE_URL: http://vector/enqueue
     env_file:
       - .env
