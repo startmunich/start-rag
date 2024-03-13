@@ -1,0 +1,5 @@
+flask == 3.0.2
+neo4j == 5.18.0
+langchain
+langchain_community
+qdrant-client == 1.6.4
