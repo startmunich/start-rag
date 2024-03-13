@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
+	"notioncrawl/services/vector_queue"
 )
 
 type Neo4jOptions struct {
@@ -18,6 +19,7 @@ type Neo4jOptions struct {
 type Crawler struct {
 	id                string
 	db                neo4j.DriverWithContext
+	vectorQueue       *vector_queue.VectorQueue
 	options           *Options
 	queue             []*CrawlQueueEntry
 	done              []*CrawlQueueEntry
@@ -31,7 +33,7 @@ var defaultOptions = &Options{
 	ForceUpdateIds: []string{},
 }
 
-func New(neo4jOptions Neo4jOptions, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
+func New(neo4jOptions Neo4jOptions, vectorQueue *vector_queue.VectorQueue, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
 	if options == nil {
 		options = defaultOptions
 	}
@@ -48,6 +50,7 @@ func New(neo4jOptions Neo4jOptions, startPageId string, metaCrawler MetaCrawler,
 	return &Crawler{
 		id:                id,
 		db:                driver,
+		vectorQueue:       vectorQueue,
 		options:           options,
 		metaCrawler:       metaCrawler,
 		contentCrawler:    contentCrawler,
@@ -149,6 +152,14 @@ func (s *Crawler) CrawlNext() error {
 		if err := UpdateCache(s.db, page, s.id); err != nil {
 			return err
 		}
+
+		log.Println("[info] Enqueue for vector db")
+		s.vectorQueue.Enqueue(&vector_queue.EnqueuePayload{
+			Ids: []string{
+				page.PageID,
+			},
+		})
+
 		childPageIds = page.CrawlResult.Children
 	} else {
 		log.Println("[info] Cache HIT")

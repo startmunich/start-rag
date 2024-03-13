@@ -8,6 +8,7 @@ import (
 	"notioncrawl/services/crawler/meta_crawler/unofficial_meta_crawler"
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
+	"notioncrawl/services/vector_queue"
 	"os"
 	"strconv"
 	"time"
@@ -36,9 +37,13 @@ func main() {
 	startPageId := mustEnv("START_PAGE_ID")
 	reRunDelaySec := mustParseInt64(mustEnv("RERUN_DELAY_SEC"))
 
+	vectorQueueUrl := mustEnv("VECTOR_QUEUE_URL")
+
 	neo4jUrl := mustEnv("NEO4J_URL")
 	neo4jUser := mustEnv("NEO4J_USER")
 	neo4jPass := mustEnv("NEO4J_PASS")
+
+	vectorQueue := vector_queue.New(vectorQueueUrl)
 
 	neo4jOptions := crawler.Neo4jOptions{
 		Address:  neo4jUrl,
@@ -60,6 +65,7 @@ func main() {
 		log.Printf("Starting Notioncrawler")
 		crawlerInstance := crawler.New(
 			neo4jOptions,
+			vectorQueue,
 			startPageId,
 			metaCrawler,
 			childrenCrawler,
