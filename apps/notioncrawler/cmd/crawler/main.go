@@ -76,8 +76,12 @@ func main() {
 			},
 		)
 
-		if err := crawlerInstance.PerformFullBaseExport(); err != nil {
-			fmt.Errorf("failed to complete full base export: %s", err.Error())
+		for crawlerInstance.HasNext() {
+			log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
+			err := crawlerInstance.CrawlNext()
+			if err != nil {
+				log.Println(err.Error())
+			}
 		}
 		crawlerInstance.Close()
 
