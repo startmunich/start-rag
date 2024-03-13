@@ -9,7 +9,6 @@ import (
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -18,14 +17,6 @@ func mustEnv(key string) string {
 		return val
 	}
 	panic(fmt.Sprintf("Missing required environment variable '%s'", key))
-}
-
-func mustParseInt64(num string) uint64 {
-	if i, err := strconv.ParseUint(num, 10, 64); err != nil {
-		panic(fmt.Sprintf("Cannot parse int64 of '%s'", num))
-	} else {
-		return i
-	}
 }
 
 func main() {
