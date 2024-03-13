@@ -9,6 +9,7 @@ import (
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -19,12 +20,21 @@ func mustEnv(key string) string {
 	panic(fmt.Sprintf("Missing required environment variable '%s'", key))
 }
 
+func mustParseInt64(num string) uint64 {
+	if i, err := strconv.ParseUint(num, 10, 64); err != nil {
+		panic(fmt.Sprintf("Cannot parse int64 of '%s'", num))
+	} else {
+		return i
+	}
+}
+
 func main() {
 	start := time.Now()
 
 	tokenv2 := mustEnv("TOKEN_V2")
 	spaceId := mustEnv("SPACE_ID")
 	startPageId := mustEnv("START_PAGE_ID")
+	reRunDelaySec := mustParseInt64(mustEnv("RERUN_DELAY_SEC"))
 
 	neo4jUrl := mustEnv("NEO4J_URL")
 	neo4jUser := mustEnv("NEO4J_USER")
@@ -46,23 +56,27 @@ func main() {
 	childrenCrawler := unofficial_content_crawler.New(notionClient)
 	workspaceExporter := unofficial_workspace_exporter.New(notionClient)
 
-	crawlerInstance := crawler.New(
-		neo4jOptions,
-		startPageId,
-		metaCrawler,
-		childrenCrawler,
-		workspaceExporter,
-		&crawler.Options{
-			ForceUpdateAll: false,
-			ForceUpdateIds: []string{},
-		},
-	)
+	for {
+		log.Printf("Starting Notioncrawler")
+		crawlerInstance := crawler.New(
+			neo4jOptions,
+			startPageId,
+			metaCrawler,
+			childrenCrawler,
+			workspaceExporter,
+			&crawler.Options{
+				ForceUpdateAll: false,
+				ForceUpdateIds: []string{},
+			},
+		)
 
-	// Do full export and memgraph import
-	if err := crawlerInstance.PerformFullBaseExport(); err != nil {
-		return
+		if err := crawlerInstance.PerformFullBaseExport(); err != nil {
+			fmt.Errorf("failed to complete full base export: %s", err.Error())
+		}
+		crawlerInstance.Close()
+
+		elapsed := time.Since(start)
+		log.Printf("Notioncrawler took %s", elapsed)
+		time.Sleep(time.Second * time.Duration(reRunDelaySec))
 	}
-
-	elapsed := time.Since(start)
-	log.Printf("Notioncrawler took %s", elapsed)
 }
