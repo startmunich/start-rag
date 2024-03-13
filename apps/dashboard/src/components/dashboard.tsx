@@ -11,6 +11,8 @@ import { Separator } from "@radix-ui/react-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Nav } from "./nav";
 import { cn } from "@/lib/utils";
+import { useContext } from "react";
+import CrawlerContext from "@/context/crawlerContext";
 
 interface DashboardProps {
   accounts: {
@@ -19,14 +21,16 @@ interface DashboardProps {
     icon: React.ReactNode;
   }[];
   defaultLayout: number[];
-  navCollapsedSize: number;
+  children: React.ReactNode;
 }
 
 export default function Dashboard({
   accounts,
   defaultLayout,
-  navCollapsedSize,
+  children,
 }: DashboardProps) {
+  const crawlerState = useContext(CrawlerContext);
+
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
@@ -40,7 +44,6 @@ export default function Dashboard({
       >
         <ResizablePanel
           defaultSize={defaultLayout[0]}
-          collapsedSize={navCollapsedSize}
           collapsible={false}
           minSize={15}
           maxSize={20}
@@ -58,12 +61,14 @@ export default function Dashboard({
             links={[
               {
                 title: "Crawler",
-                label: "Running",
+                href: "/crawler",
+                label: crawlerState.isRunning ? "Running" : "Stopped",
                 icon: ScanSearch,
                 variant: "default",
               },
               {
                 title: "Backup",
+                href: "/backup",
                 label: "20.000",
                 icon: Package,
                 variant: "ghost",
@@ -73,36 +78,7 @@ export default function Dashboard({
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-          <Tabs defaultValue="all">
-            <div className="flex items-center px-4 py-2">
-              <h1 className="text-xl font-bold">Inbox</h1>
-              <TabsList className="ml-auto">
-                <TabsTrigger
-                  value="all"
-                  className="text-zinc-600 dark:text-zinc-200"
-                >
-                  All
-                </TabsTrigger>
-                <TabsTrigger
-                  value="unread"
-                  className="text-zinc-600 dark:text-zinc-200"
-                >
-                  New
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <Separator />
-            <TabsContent value="all" className="m-0">
-              Placeholder
-            </TabsContent>
-            <TabsContent value="unread" className="m-0">
-              Placeholder
-            </TabsContent>
-          </Tabs>
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={defaultLayout[2]}>
-          Content of a page
+            {children}
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>

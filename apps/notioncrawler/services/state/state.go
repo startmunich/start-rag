@@ -1,12 +1,11 @@
 package state
 
-import "google.golang.org/genproto/googleapis/type/date"
-
 type State struct {
-	IsRunning bool
-	InQueue   uint64
-	Processed uint64
+	IsRunning bool   `json:"isRunning"`
+	InQueue   uint64 `json:"inQueue"`
+	Processed uint64 `json:"processed"`
 
-	LastRunDuration uint64
-	LastRunEndedAt  date.Date
+	LastRunDuration  uint64 `json:"lastRunDuration"`
+	LastRunStartedAt int64  `json:"lastRunStartedAt"`
+	LastRunEndedAt   int64  `json:"lastRunEndedAt"`
 }
