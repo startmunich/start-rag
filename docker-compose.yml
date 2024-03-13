@@ -71,13 +71,11 @@ services:
     build:
       context: ./apps/notioncrawler
       dockerfile: Dockerfile
-    volumes:
-      - '$HOME/startgpt/notioncrawler/data:/data'
     depends_on:
       - neo4j
     environment:
       NEO4J_URL: bolt://neo4j:7687
-      NEO4J_USER: starneo4jtgpt
+      NEO4J_USER: neo4j
       NEO4J_PASS: redbull_wildberry
       VECTOR_QUEUE_URL: http://vectordb_sync:5000
     env_file:
