@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
+	"notioncrawl/services/vectordb"
 )
 
 type Crawler struct {
 	id                string
-	db                neo4j.DriverWithContext
+	vectorDb          *vectordb.QdrantDb
 	options           *Options
 	queue             []*CrawlQueueEntry
 	done              []*CrawlQueueEntry
@@ -24,9 +24,14 @@ var defaultOptions = &Options{
 	ForceUpdateIds: []string{},
 }
 
-func New(db neo4j.DriverWithContext, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
+func New(vectorDbOptions vectordb.QdrantDbOptions, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
 	if options == nil {
 		options = defaultOptions
+	}
+
+	vectorDb, err := vectordb.New(vectorDbOptions)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	id := uuid.New().String()
@@ -35,7 +40,7 @@ func New(db neo4j.DriverWithContext, startPageId string, metaCrawler MetaCrawler
 
 	return &Crawler{
 		id:                id,
-		db:                db,
+		vectorDb:          vectorDb,
 		options:           options,
 		metaCrawler:       metaCrawler,
 		contentCrawler:    contentCrawler,
@@ -47,6 +52,10 @@ func New(db neo4j.DriverWithContext, startPageId string, metaCrawler MetaCrawler
 			},
 		},
 	}
+}
+
+func (s *Crawler) Close() error {
+	return s.vectorDb.Close()
 }
 
 func (s *Crawler) QueueSize() int {
@@ -162,10 +171,10 @@ func (s *Crawler) PerformFullBaseExport() error {
 			continue
 		}
 		log.Printf("[info] Page: %s", page.PageID)
-		cachedPage := GetCachedPage(s.db, page.PageID)
+		cachedPage := GetCachedPage(s.vectorDb, page.PageID)
 		if cachedPage == nil || cachedPage.Hash != page.Hash || s.shouldForceUpdate(page.PageID) {
 			log.Println("[info] Cache MISS")
-			if err := UpdateCache(s.db, page, s.id); err != nil {
+			if err := UpdateCache(s.vectorDb, page, s.id); err != nil {
 				return err
 			}
 		} else {

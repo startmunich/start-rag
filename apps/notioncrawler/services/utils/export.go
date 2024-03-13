@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
-	"notioncrawl/src/services/notion"
+	"notioncrawl/services/notion"
 	"path/filepath"
 	"time"
 )

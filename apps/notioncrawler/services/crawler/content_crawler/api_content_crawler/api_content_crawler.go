@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/jomei/notionapi"
 	"log"
-	"notioncrawl/src/services/crawler"
+	"notioncrawl/services/crawler"
 	"regexp"
 	"strings"
 )

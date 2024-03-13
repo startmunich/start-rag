@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"notioncrawl/src/services/crawler"
+	"notioncrawl/services/crawler"
 	"path/filepath"
 	"regexp"
 )

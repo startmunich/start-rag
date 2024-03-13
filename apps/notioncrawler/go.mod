@@ -10,4 +10,5 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/neo4j/neo4j-go-driver/v5 v5.17.0 // indirect
+	github.com/qdrant/go-client v1.8.0 // indirect
 )

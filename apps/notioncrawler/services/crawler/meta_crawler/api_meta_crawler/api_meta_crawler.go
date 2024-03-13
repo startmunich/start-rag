@@ -3,7 +3,7 @@ package api_meta_crawler
 import (
 	"context"
 	"github.com/jomei/notionapi"
-	"notioncrawl/src/services/crawler"
+	"notioncrawl/services/crawler"
 )
 
 type ApiMetaCrawler struct {

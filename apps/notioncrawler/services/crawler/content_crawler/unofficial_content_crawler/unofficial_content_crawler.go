@@ -1,9 +1,9 @@
 package unofficial_content_crawler
 
 import (
-	"notioncrawl/src/services/crawler"
-	"notioncrawl/src/services/notion"
-	"notioncrawl/src/services/utils"
+	"notioncrawl/services/crawler"
+	"notioncrawl/services/notion"
+	"notioncrawl/services/utils"
 	"os"
 	"path/filepath"
 )

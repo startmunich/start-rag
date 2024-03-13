@@ -2,8 +2,8 @@ package unofficial_meta_crawler
 
 import (
 	"fmt"
-	"notioncrawl/src/services/crawler"
-	"notioncrawl/src/services/notion"
+	"notioncrawl/services/crawler"
+	"notioncrawl/services/notion"
 )
 
 type UnofficialMetaCrawler struct {

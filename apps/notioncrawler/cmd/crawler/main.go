@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
-	"notioncrawl/src/services/crawler"
-	"notioncrawl/src/services/crawler/content_crawler/unofficial_content_crawler"
-	"notioncrawl/src/services/crawler/meta_crawler/unofficial_meta_crawler"
-	"notioncrawl/src/services/crawler/workspace_exporter/unofficial_workspace_exporter"
-	"notioncrawl/src/services/notion"
+	"notioncrawl/services/crawler"
+	"notioncrawl/services/crawler/content_crawler/unofficial_content_crawler"
+	"notioncrawl/services/crawler/meta_crawler/unofficial_meta_crawler"
+	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
+	"notioncrawl/services/notion"
+	"notioncrawl/services/vectordb"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -21,6 +22,14 @@ func mustEnv(key string) string {
 	panic(fmt.Sprintf("Missing required environment variable '%s'", key))
 }
 
+func mustParseInt64(num string) uint64 {
+	if i, err := strconv.ParseUint(num, 10, 64); err != nil {
+		panic(fmt.Sprintf("Cannot parse int64 of '%s'", num))
+	} else {
+		return i
+	}
+}
+
 func main() {
 	start := time.Now()
 
@@ -29,12 +38,26 @@ func main() {
 	startPageId := mustEnv("START_PAGE_ID")
 	qdrantHost := mustEnv("QDRANT_HOST")
 
-	dbUri := "bolt://localhost:7687"
-	driver, err := neo4j.NewDriverWithContext(dbUri, neo4j.BasicAuth("username", "password", ""))
-	if err != nil {
-		panic(err)
+	vectorSize := mustEnv("VECTOR_SIZE")
+	vectorDistance := mustEnv("VECTOR_DISTANCE")
+	vectorCollectionName := mustEnv("VECTOR_COLLECTION_NAME")
+
+	vectorDbOptions := vectordb.QdrantDbOptions{
+		Address:        qdrantHost,
+		Size:           mustParseInt64(vectorSize),
+		Distance:       vectordb.MustParseDistance(vectorDistance),
+		CollectionName: vectorCollectionName,
 	}
-	defer driver.Close(context.Background())
+
+	{
+		// Database Setup
+		qdClient, err := vectordb.New(vectorDbOptions)
+		if err != nil {
+			log.Fatal(err)
+		}
+		qdClient.Setup(context.Background())
+		qdClient.Close()
+	}
 
 	notionClient := notion.New(notion.Options{
 		NotionSpaceId: spaceId,
@@ -47,7 +70,7 @@ func main() {
 	workspaceExporter := unofficial_workspace_exporter.New(notionClient)
 
 	crawlerInstance := crawler.New(
-		driver,
+		vectorDbOptions,
 		startPageId,
 		metaCrawler,
 		childrenCrawler,
@@ -57,6 +80,7 @@ func main() {
 			ForceUpdateIds: []string{},
 		},
 	)
+	defer crawlerInstance.Close()
 
 	// Do full export and memgraph import
 	if err := crawlerInstance.PerformFullBaseExport(); err != nil {
