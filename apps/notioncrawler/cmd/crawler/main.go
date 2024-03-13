@@ -41,28 +41,6 @@ func main() {
 		Token:         tokenv2,
 	})
 
-	//notionClient := notionapi.NewClient(token)
-
-	/*
-		// EXAMPLE EXPORT ONE PAGE
-		export, err := exporterInstance.ExportExtracted(exporter.ExportOptions{
-			ResourceType:          exporter.ResourceTypeBlock,
-			BlockId:               "fc6b85e65b29408bb5297112cf1c76ec",
-			ExportType:            exporter.ExportTypeMarkdown,
-			ExportFiles:           false,
-			ExportComments:        true,
-			FlattenExportFiletree: false,
-		})
-		if err != nil {
-			return
-		}
-
-		log.Println(export)
-	*/
-
-	// USE Notion Block API to crawl Children
-	//childrenCrawler := crawler.NewApiChildCrawler(notionClient)
-
 	// USE Exporter to crawl children
 	metaCrawler := unofficial_meta_crawler.New(notionClient)
 	childrenCrawler := unofficial_content_crawler.New(notionClient)
@@ -79,16 +57,6 @@ func main() {
 			ForceUpdateIds: []string{},
 		},
 	)
-
-	// Loops over pages following links and updates in memgraph if something changed
-	/*for crawlerInstance.HasNext() {
-		log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
-		err := crawlerInstance.CrawlNext()
-		if err != nil {
-			log.Println(err.Error())
-		}
-	}
-	crawlerInstance.Print()*/
 
 	// Do full export and memgraph import
 	if err := crawlerInstance.PerformFullBaseExport(); err != nil {
