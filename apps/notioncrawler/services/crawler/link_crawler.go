@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
+	"notioncrawl/services/state"
 	"notioncrawl/services/vector_queue"
 )
 
@@ -18,6 +19,7 @@ type Neo4jOptions struct {
 
 type Crawler struct {
 	id                string
+	state             *state.Manager
 	db                neo4j.DriverWithContext
 	vectorQueue       *vector_queue.VectorQueue
 	options           *Options
@@ -33,7 +35,7 @@ var defaultOptions = &Options{
 	ForceUpdateIds: []string{},
 }
 
-func New(neo4jOptions Neo4jOptions, vectorQueue *vector_queue.VectorQueue, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
+func New(stateMgr *state.Manager, neo4jOptions Neo4jOptions, vectorQueue *vector_queue.VectorQueue, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
 	if options == nil {
 		options = defaultOptions
 	}
@@ -50,6 +52,7 @@ func New(neo4jOptions Neo4jOptions, vectorQueue *vector_queue.VectorQueue, start
 	return &Crawler{
 		id:                id,
 		db:                driver,
+		state:             stateMgr,
 		vectorQueue:       vectorQueue,
 		options:           options,
 		metaCrawler:       metaCrawler,

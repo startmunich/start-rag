@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"notioncrawl/services/api"
 	"notioncrawl/services/crawler"
 	"notioncrawl/services/crawler/content_crawler/unofficial_content_crawler"
 	"notioncrawl/services/crawler/meta_crawler/unofficial_meta_crawler"
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
+	"notioncrawl/services/state"
 	"notioncrawl/services/vector_queue"
 	"os"
 	"strconv"
@@ -43,6 +45,8 @@ func main() {
 	neo4jUser := mustEnv("NEO4J_USER")
 	neo4jPass := mustEnv("NEO4J_PASS")
 
+	port := mustEnv("PORT")
+
 	vectorQueue := vector_queue.New(vectorQueueUrl)
 
 	neo4jOptions := crawler.Neo4jOptions{
@@ -63,6 +67,10 @@ func main() {
 		DownloadDir:   downloadDir,
 	})
 
+	stateMgr := state.New()
+
+	go api.Run(stateMgr, fmt.Sprintf(":%s", port))
+
 	// USE Exporter to crawl children
 	metaCrawler := unofficial_meta_crawler.New(notionClient)
 	childrenCrawler := unofficial_content_crawler.New(notionClient)
@@ -70,7 +78,9 @@ func main() {
 
 	for {
 		log.Printf("Starting Notioncrawler")
+		stateMgr.UpdateIsRunning(true).UpdateLastRunStartedAt(time.Now().UTC().UnixMilli())
 		crawlerInstance := crawler.New(
+			stateMgr,
 			neo4jOptions,
 			vectorQueue,
 			startPageId,
@@ -83,17 +93,21 @@ func main() {
 			},
 		)
 
+		processed := uint64(0)
 		for crawlerInstance.HasNext() {
 			log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
+			stateMgr.UpdateInQueue(uint64(crawlerInstance.QueueSize())).UpdateProcessed(processed)
 			err := crawlerInstance.CrawlNext()
 			if err != nil {
 				log.Println(err.Error())
 			}
+			processed += 1
 		}
 		crawlerInstance.Close()
 
 		elapsed := time.Since(start)
 		log.Printf("Notioncrawler took %s", elapsed)
+		stateMgr.UpdateIsRunning(false).UpdateLastRunDuration(uint64(elapsed.Milliseconds())).UpdateLastRunEndedAt(time.Now().UTC().UnixMilli())
 		time.Sleep(time.Second * time.Duration(reRunDelaySec))
 	}
 }
