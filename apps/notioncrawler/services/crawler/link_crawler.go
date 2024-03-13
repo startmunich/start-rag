@@ -154,11 +154,13 @@ func (s *Crawler) CrawlNext() error {
 		}
 
 		log.Println("[info] Enqueue for vector db")
-		s.vectorQueue.Enqueue(&vector_queue.EnqueuePayload{
+		if err := s.vectorQueue.Enqueue(&vector_queue.EnqueuePayload{
 			Ids: []string{
 				page.PageID,
 			},
-		})
+		}); err != nil {
+			fmt.Errorf("[error] Failed to enqueue: %v", err)
+		}
 
 		childPageIds = page.CrawlResult.Children
 	} else {
