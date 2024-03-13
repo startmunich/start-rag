@@ -1,4 +1,5 @@
-import { File, Inbox } from "lucide-react";
+"use client";
+import { File, Inbox, Package, ScanSearch } from "lucide-react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   ResizableHandle,
@@ -7,12 +8,9 @@ import {
 } from "./ui/resizable";
 import { AccountSwitcher } from "./account-switcher";
 import { Separator } from "@radix-ui/react-select";
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Nav } from "./nav";
 import { cn } from "@/lib/utils";
-
-const defaultLayoutValue = [265, 440, 655];
 
 interface DashboardProps {
   accounts: {
@@ -20,17 +18,15 @@ interface DashboardProps {
     email: string;
     icon: React.ReactNode;
   }[];
-  defaultLayout: number[] | undefined;
+  defaultLayout: number[];
   navCollapsedSize: number;
 }
 
 export default function Dashboard({
   accounts,
-  defaultLayout = defaultLayoutValue,
+  defaultLayout,
   navCollapsedSize,
 }: DashboardProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
@@ -45,42 +41,31 @@ export default function Dashboard({
         <ResizablePanel
           defaultSize={defaultLayout[0]}
           collapsedSize={navCollapsedSize}
-          collapsible={true}
+          collapsible={false}
           minSize={15}
           maxSize={20}
-          onCollapse={() => {
-            setIsCollapsed(!isCollapsed);
-            document.cookie = `react-resizable-panels:collapsed=${JSON.stringify(
-              !isCollapsed,
-            )}`;
-          }}
-          className={cn(
-            isCollapsed &&
-              "min-w-[50px] transition-all duration-300 ease-in-out",
-          )}
         >
           <div
             className={cn(
-              "flex h-[52px] items-center justify-center",
-              isCollapsed ? "h-[52px]" : "px-2",
+              "flex h-[52px] items-center justify-center px-2",
             )}
           >
-            <AccountSwitcher isCollapsed={isCollapsed} accounts={accounts} />
+            <AccountSwitcher isCollapsed={false} accounts={accounts} />
           </div>
           <Separator />
           <Nav
-            isCollapsed={isCollapsed}
+            isCollapsed={false}
             links={[
               {
-                title: "Inbox",
-                label: "128",
-                icon: Inbox,
+                title: "Crawler",
+                label: "Running",
+                icon: ScanSearch,
                 variant: "default",
               },
               {
-                title: "Drafts",
-                label: "9",
-                icon: File,
+                title: "Backup",
+                label: "20.000",
+                icon: Package,
                 variant: "ghost",
               },
             ]}
