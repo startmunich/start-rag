@@ -128,6 +128,8 @@ def process_queue():
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue_ids():
+    app.logger.info('json payload')
+    app.logger.info(request.json)
     data = request.json
     if 'ids' in data:
         for id_to_enqueue in data['ids']:
@@ -146,4 +148,4 @@ if __name__ == '__main__':
     queue_processor_thread.start()
 
     # Start Flask API
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
