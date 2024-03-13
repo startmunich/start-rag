@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"notioncrawl/services/crawler"
@@ -9,7 +8,6 @@ import (
 	"notioncrawl/services/crawler/meta_crawler/unofficial_meta_crawler"
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
-	"notioncrawl/services/vectordb"
 	"os"
 	"strconv"
 	"time"
@@ -36,27 +34,15 @@ func main() {
 	tokenv2 := mustEnv("TOKEN_V2")
 	spaceId := mustEnv("SPACE_ID")
 	startPageId := mustEnv("START_PAGE_ID")
-	qdrantHost := mustEnv("QDRANT_HOST")
 
-	vectorSize := mustEnv("VECTOR_SIZE")
-	vectorDistance := mustEnv("VECTOR_DISTANCE")
-	vectorCollectionName := mustEnv("VECTOR_COLLECTION_NAME")
+	neo4jUrl := mustEnv("NEO4J_URL")
+	neo4jUser := mustEnv("NEO4J_USER")
+	neo4jPass := mustEnv("NEO4J_PASS")
 
-	vectorDbOptions := vectordb.QdrantDbOptions{
-		Address:        qdrantHost,
-		Size:           mustParseInt64(vectorSize),
-		Distance:       vectordb.MustParseDistance(vectorDistance),
-		CollectionName: vectorCollectionName,
-	}
-
-	{
-		// Database Setup
-		qdClient, err := vectordb.New(vectorDbOptions)
-		if err != nil {
-			log.Fatal(err)
-		}
-		qdClient.Setup(context.Background())
-		qdClient.Close()
+	neo4jOptions := crawler.Neo4jOptions{
+		Address:  neo4jUrl,
+		Username: neo4jUser,
+		Password: neo4jPass,
 	}
 
 	notionClient := notion.New(notion.Options{
@@ -70,7 +56,7 @@ func main() {
 	workspaceExporter := unofficial_workspace_exporter.New(notionClient)
 
 	crawlerInstance := crawler.New(
-		vectorDbOptions,
+		neo4jOptions,
 		startPageId,
 		metaCrawler,
 		childrenCrawler,
@@ -80,7 +66,6 @@ func main() {
 			ForceUpdateIds: []string{},
 		},
 	)
-	defer crawlerInstance.Close()
 
 	// Do full export and memgraph import
 	if err := crawlerInstance.PerformFullBaseExport(); err != nil {
