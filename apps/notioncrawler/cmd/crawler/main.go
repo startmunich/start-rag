@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"notioncrawl/services/crawler"
@@ -9,7 +8,7 @@ import (
 	"notioncrawl/services/crawler/meta_crawler/unofficial_meta_crawler"
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
-	"notioncrawl/services/vectordb"
+	"notioncrawl/services/vector_queue"
 	"os"
 	"strconv"
 	"time"
@@ -36,32 +35,32 @@ func main() {
 	tokenv2 := mustEnv("TOKEN_V2")
 	spaceId := mustEnv("SPACE_ID")
 	startPageId := mustEnv("START_PAGE_ID")
-	qdrantHost := mustEnv("QDRANT_HOST")
+	reRunDelaySec := mustParseInt64(mustEnv("RERUN_DELAY_SEC"))
 
-	vectorSize := mustEnv("VECTOR_SIZE")
-	vectorDistance := mustEnv("VECTOR_DISTANCE")
-	vectorCollectionName := mustEnv("VECTOR_COLLECTION_NAME")
+	vectorQueueUrl := mustEnv("VECTOR_QUEUE_URL")
 
-	vectorDbOptions := vectordb.QdrantDbOptions{
-		Address:        qdrantHost,
-		Size:           mustParseInt64(vectorSize),
-		Distance:       vectordb.MustParseDistance(vectorDistance),
-		CollectionName: vectorCollectionName,
+	neo4jUrl := mustEnv("NEO4J_URL")
+	neo4jUser := mustEnv("NEO4J_USER")
+	neo4jPass := mustEnv("NEO4J_PASS")
+
+	vectorQueue := vector_queue.New(vectorQueueUrl)
+
+	neo4jOptions := crawler.Neo4jOptions{
+		Address:  neo4jUrl,
+		Username: neo4jUser,
+		Password: neo4jPass,
 	}
 
-	{
-		// Database Setup
-		qdClient, err := vectordb.New(vectorDbOptions)
-		if err != nil {
-			log.Fatal(err)
-		}
-		qdClient.Setup(context.Background())
-		qdClient.Close()
+	downloadDir, err := os.MkdirTemp("", "notioncrawler_download")
+	if err != nil {
+		panic("Failed to create temp download folder")
 	}
+	defer os.RemoveAll(downloadDir)
 
 	notionClient := notion.New(notion.Options{
 		NotionSpaceId: spaceId,
 		Token:         tokenv2,
+		DownloadDir:   downloadDir,
 	})
 
 	// USE Exporter to crawl children
@@ -69,24 +68,32 @@ func main() {
 	childrenCrawler := unofficial_content_crawler.New(notionClient)
 	workspaceExporter := unofficial_workspace_exporter.New(notionClient)
 
-	crawlerInstance := crawler.New(
-		vectorDbOptions,
-		startPageId,
-		metaCrawler,
-		childrenCrawler,
-		workspaceExporter,
-		&crawler.Options{
-			ForceUpdateAll: false,
-			ForceUpdateIds: []string{},
-		},
-	)
-	defer crawlerInstance.Close()
+	for {
+		log.Printf("Starting Notioncrawler")
+		crawlerInstance := crawler.New(
+			neo4jOptions,
+			vectorQueue,
+			startPageId,
+			metaCrawler,
+			childrenCrawler,
+			workspaceExporter,
+			&crawler.Options{
+				ForceUpdateAll: false,
+				ForceUpdateIds: []string{},
+			},
+		)
 
-	// Do full export and memgraph import
-	if err := crawlerInstance.PerformFullBaseExport(); err != nil {
-		return
+		for crawlerInstance.HasNext() {
+			log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
+			err := crawlerInstance.CrawlNext()
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}
+		crawlerInstance.Close()
+
+		elapsed := time.Since(start)
+		log.Printf("Notioncrawler took %s", elapsed)
+		time.Sleep(time.Second * time.Duration(reRunDelaySec))
 	}
-
-	elapsed := time.Since(start)
-	log.Printf("Notioncrawler took %s", elapsed)
 }

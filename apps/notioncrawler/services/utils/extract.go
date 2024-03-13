@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	ExportFileName  = "notion_dump"
-	ExportDirectory = "/Users/khadim/dev/notioncrawler/data"
+	ExportFileName = "notion_dump"
 )
 
 func ExtractExportZip(file string) (string, error) {
@@ -22,7 +21,9 @@ func ExtractExportZip(file string) (string, error) {
 		ExportFileName,
 		now.Format("2006-01-02_15-04-05"),
 	)
-	outputDir := filepath.Join(ExportDirectory, outputDirName)
+
+	parentDir := filepath.Base(file)
+	outputDir := filepath.Join(parentDir, outputDirName)
 
 	log.Printf("Extracting download: %s", file)
 

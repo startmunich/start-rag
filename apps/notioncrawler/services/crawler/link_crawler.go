@@ -1,16 +1,25 @@
 package crawler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
-	"notioncrawl/services/vectordb"
+	"notioncrawl/services/vector_queue"
 )
+
+type Neo4jOptions struct {
+	Address  string
+	Username string
+	Password string
+}
 
 type Crawler struct {
 	id                string
-	vectorDb          *vectordb.QdrantDb
+	db                neo4j.DriverWithContext
+	vectorQueue       *vector_queue.VectorQueue
 	options           *Options
 	queue             []*CrawlQueueEntry
 	done              []*CrawlQueueEntry
@@ -24,14 +33,14 @@ var defaultOptions = &Options{
 	ForceUpdateIds: []string{},
 }
 
-func New(vectorDbOptions vectordb.QdrantDbOptions, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
+func New(neo4jOptions Neo4jOptions, vectorQueue *vector_queue.VectorQueue, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
 	if options == nil {
 		options = defaultOptions
 	}
 
-	vectorDb, err := vectordb.New(vectorDbOptions)
+	driver, err := neo4j.NewDriverWithContext(neo4jOptions.Address, neo4j.BasicAuth(neo4jOptions.Username, neo4jOptions.Password, ""))
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	id := uuid.New().String()
@@ -40,7 +49,8 @@ func New(vectorDbOptions vectordb.QdrantDbOptions, startPageId string, metaCrawl
 
 	return &Crawler{
 		id:                id,
-		vectorDb:          vectorDb,
+		db:                driver,
+		vectorQueue:       vectorQueue,
 		options:           options,
 		metaCrawler:       metaCrawler,
 		contentCrawler:    contentCrawler,
@@ -55,7 +65,7 @@ func New(vectorDbOptions vectordb.QdrantDbOptions, startPageId string, metaCrawl
 }
 
 func (s *Crawler) Close() error {
-	return s.vectorDb.Close()
+	return s.db.Close(context.Background())
 }
 
 func (s *Crawler) QueueSize() int {
@@ -142,6 +152,14 @@ func (s *Crawler) CrawlNext() error {
 		if err := UpdateCache(s.db, page, s.id); err != nil {
 			return err
 		}
+
+		log.Println("[info] Enqueue for vector db")
+		s.vectorQueue.Enqueue(&vector_queue.EnqueuePayload{
+			Ids: []string{
+				page.PageID,
+			},
+		})
+
 		childPageIds = page.CrawlResult.Children
 	} else {
 		log.Println("[info] Cache HIT")
@@ -171,10 +189,10 @@ func (s *Crawler) PerformFullBaseExport() error {
 			continue
 		}
 		log.Printf("[info] Page: %s", page.PageID)
-		cachedPage := GetCachedPage(s.vectorDb, page.PageID)
+		cachedPage := GetCachedPage(s.db, page.PageID)
 		if cachedPage == nil || cachedPage.Hash != page.Hash || s.shouldForceUpdate(page.PageID) {
 			log.Println("[info] Cache MISS")
-			if err := UpdateCache(s.vectorDb, page, s.id); err != nil {
+			if err := UpdateCache(s.db, page, s.id); err != nil {
 				return err
 			}
 		} else {
