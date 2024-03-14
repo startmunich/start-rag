@@ -1,0 +1,128 @@
+version: '3.4'
+
+services:
+  traefik:
+    image: "traefik:v3.0.0-beta4"
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    deploy:
+      placement:
+        constraints:
+          # Make the traefik service run only on the node with this label
+          # as the node with it has the volume for the certificates
+          - node.labels.traefik-public.traefik-public-certificates == true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.traefik-public-http.rule=Host(`pt.start.khadim.io`)
+      - traefik.http.routers.traefik-public-http.entrypoints=http
+      - traefik.http.services.traefik-public.loadbalancer.server.port=8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ~/.certs/:/certs/
+    command:
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --api
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --log.level=DEBUG
+
+  qdrant:
+    image: "qdrant/qdrant"
+    hostname: qdrant
+    ports:
+      - "6333:6333"
+
+  infinity:
+    image: "michaelf34/infinity"
+    hostname: infinity
+    command: --model-name-or-path BAAI/bge-small-en
+    ports:
+      - "7997:7997"
+
+  neo4j:
+    hostname: neo4j
+    restart: always
+    image: neo4j:5.17
+    volumes:
+      - '$HOME/startgpt/neo4j/data:/data'
+      - '$HOME/startgpt/neo4j/conf/:/conf/'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,algo.*
+      - NEO4J_apoc_uuid_enabled=true
+      - server.memory.heap.initial_size=512m
+      - server.memory.heap.max_size=2G
+      - server.default_listen_address=0.0.0.0
+      - initial.dbms.default_database=neo4j
+      - NEO4J_AUTH=neo4j/redbull_wildberry
+
+  notioncrawler:
+    platform: "linux/amd64"
+    restart: always
+    build:
+      context: ./apps/notioncrawler
+      dockerfile: Dockerfile
+    depends_on:
+      - neo4j
+    ports:
+      - "5001:5001"
+    environment:
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: redbull_wildberry
+      VECTOR_QUEUE_URL: http://vectordb_sync:5000
+      SPACE_ID: $SPACE_ID
+      START_PAGE_ID: $START_PAGE_ID
+      TOKEN_V2: $TOKEN_V2
+      PORT: 5001
+
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      target: production
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_CRAWLER_API_BASE_PATH=http://notioncrawler:5001
+    labels:
+      - "traefik.http.routers.dashboard-http.entrypoints=web"
+      - "traefik.http.routers.dashboard-http.rule=Host(`dash.start.khadim.io`)"
+      - "traefik.http.routers.dashboard-http.middlewares=dashboard-https"
+      - "traefik.http.middlewares.dashboard-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.rule=Host(`dash.start.khadim.io`)"
+      - "traefik.http.routers.dashboard.tls=true"
+
+  vectordb_sync:
+    hostname: vectordb_sync
+    ports:
+      - "5000:5000"
+    platform: "linux/amd64"
+    restart: always
+    build:
+      context: ./apps/vectordb_sync
+      dockerfile: Dockerfile
+    depends_on:
+      - neo4j
+      - qdrant
+    environment:
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: redbull_wildberry
+      QDRANT_URL: qdrant:6333
+      QDRANT_COLLECTION_NAME: startgpt
+      INFINITY_URL: http://infinity:7997/v1
+      INFINITY_COLLECTION_NAME: bge-small-en
