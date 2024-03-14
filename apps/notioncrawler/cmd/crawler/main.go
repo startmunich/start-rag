@@ -75,7 +75,7 @@ func main() {
 
 	stateMgr := state.New()
 
-	go api.Run(stateMgr, fmt.Sprintf(":%s", port))
+	go api.Run(stateMgr, neo4jOptions, fmt.Sprintf(":%s", port))
 
 	// USE Exporter to crawl children
 	metaCrawler := unofficial_meta_crawler.New(notionClient)
