@@ -51,6 +51,10 @@ func main() {
 
 	vectorQueue := vector_queue.New(vectorQueueUrl)
 
+	println("Waiting for Vector Queue ...")
+	vectorQueue.WaitForReady()
+	println("Vector Queue is ready")
+
 	neo4jOptions := crawler.Neo4jOptions{
 		Address:  neo4jUrl,
 		Username: neo4jUser,

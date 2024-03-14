@@ -11,7 +11,12 @@ app = App(token=os.environ["SLACK_APP_TOKEN"])
 
 @app.event("app_mention")
 def event_test(event, say):
-    print(event)
+    user = event["user"]
+    channel = event["channel"]
+    text = event["text"]
+    print("Received Message\n | channel: " + channel + ", user: " + user + ", text: " + text)
+    # TODO: Lang Magic and say answer
+    return
 
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_BOT_TOKEN"]).start()

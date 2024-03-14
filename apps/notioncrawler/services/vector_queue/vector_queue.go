@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type VectorQueue struct {
@@ -15,6 +16,17 @@ type VectorQueue struct {
 func New(basePath string) *VectorQueue {
 	return &VectorQueue{
 		basePath: basePath,
+	}
+}
+
+func (v *VectorQueue) WaitForReady() {
+	url := fmt.Sprintf("%s/ready", v.basePath)
+
+	for {
+		if res, err := http.Get(url); err == nil && res.StatusCode == 200 {
+			return
+		}
+		time.Sleep(time.Duration(1) * time.Second)
 	}
 }
 
