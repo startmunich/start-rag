@@ -33,8 +33,9 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 app
 RUN adduser --system --uid 1001 app
 USER app
-COPY --chown=app:app --from=builder /app/apps/frontend/.next/standalone src/
-COPY --chown=app:app --from=builder /app/apps/frontend/public src/apps/frontend/public
+COPY --chown=app:app --from=builder /app/.next/standalone src/
+COPY --chown=app:app --from=builder /app/public src/public
+COPY --chown=app:app --from=builder /app/.next/static src/.next/static
 ENV PORT 3000
 EXPOSE 3000
 CMD ["node", "src/apps/frontend/server.js"]
