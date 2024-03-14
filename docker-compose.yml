@@ -73,6 +73,8 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - neo4j
+    ports:
+      - "8000:8000"
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j
@@ -81,6 +83,16 @@ services:
     env_file:
       - .env
       - .env.local
+
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      target: production
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_CRAWLER_API_BASE_PATH=http://notioncrawler:8000
 
   vectordb_sync:
     hostname: vectordb_sync

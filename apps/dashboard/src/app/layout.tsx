@@ -23,7 +23,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const crawlerState = useCrawlerState("http://localhost:3111");
+  const crawlerState = useCrawlerState(process.env.NEXT_PUBLIC_CRAWLER_API_BASE_PATH!);
   return (
     <html lang="en">
       <body className={inter.className}>
