@@ -19,6 +19,7 @@ import json
 import queue
 import time
 import os
+import uuid
 import numpy as np
 
 
@@ -109,11 +110,7 @@ def process_queue():
                 # Embed the chunks using Infinity
 
                 
-                embeddings = InfinityEmbeddings(
-                                model=infinity_model, infinity_api_url=infinity_api_url
-                            )
-                
-                chunks_embedded = embeddings.embed_documents(chunks)
+                chunks_embedded = [requests.post(url=f"{infinity_api_url}/embeddings", json={"model": "bge-small-en-v1.5", "input":[chunk]}).json()["data"][0]["embedding"] for chunk in chunks]
                 print("embeddings created successful")
                 
                 
@@ -133,11 +130,10 @@ def process_queue():
                                     )
 
                 # Insert the preprocessed chunk into Qdrant
-                info = qdrant_client.info(collection_name=qdrant_collection_name)
                 
-                points_to_update = [PointStruct(id=info["result"]["vectors_count"] + count, 
-                                                vector=chunk_embedding.tolist(),
-                                                payload={"content": chunk, "page_id": id_to_process}) for count, (chunk_embedding, chunk) in enumerate(zip(chunks_embedded, chunks))]
+                points_to_update = [PointStruct(id=str(uuid.uuid4()), 
+                                                vector=chunk_embedding,
+                                                payload={"content": chunk, "page_id": id_to_process}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
                 
                 app.logger.info(f"points_to_update: {points_to_update}")
 
@@ -166,6 +162,10 @@ def enqueue_ids():
     else:
         print("No IDs provided")
         return jsonify({"error": "No IDs provided"}), 400
+    
+@app.route('/ready', methods=['GET'])
+def ready():
+    return jsonify({"status": "ready"}), 200
 
 
 if __name__ == '__main__':
@@ -180,6 +180,14 @@ if __name__ == '__main__':
         qdrant_client.create_collection(collection_name=qdrant_collection_name, 
                                         vectors_config=VectorParams(size=384, distance="Cosine"),
                                         on_disk_payload=True,)
+
+    while True:
+        try:
+            requests.get(url=f"{infinity_api_url}/ready")
+            break
+        except:
+            time.sleep(1)
+            
 
     # Start Flask API
     app.run(debug=True, host='0.0.0.0')

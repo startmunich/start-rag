@@ -4,3 +4,4 @@ langchain
 langchain_community
 qdrant-client == 1.6.4
 numpy
+uuid
