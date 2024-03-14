@@ -10,7 +10,7 @@ import (
 
 func (c *ApiController) PurgeDb(ctx *fiber.Ctx) error {
 	if result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
-		"MATCH (n:CrawledPage)\nDELETE n",
+		"MATCH (n:CrawledPage)\nDETACH DELETE n",
 		map[string]any{}, neo4j.EagerResultTransformer); err != nil {
 		return err
 	} else {
