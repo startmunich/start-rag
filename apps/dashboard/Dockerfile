@@ -26,7 +26,6 @@ RUN pnpm install
 # Then we use pnpm deploy command to prune the dependencies
 FROM with_all_deps as builder
 RUN pnpm build
-RUN pnpm deploy pruned --prod
 
 # STAGE 5: Create a clean production image - only take pruned assets
 FROM node:18-alpine AS runner
