@@ -1,35 +1,52 @@
-FROM node:18-alpine as base
-RUN apk add --no-cache g++ make py3-pip libc6-compat
+# STAGE 1: A container with pnpm and python3 is required
+FROM node:18-alpine as pnpm_base
+
 WORKDIR /app
-COPY package*.json ./
+RUN npm i --global --no-update-notifier --no-fund pnpm@7
+RUN apk add --no-cache g++ make py3-pip libc6-compat
+
+# STAGE 2: fetch deps into the pnpm store
+# We run pnpm fetch in a separate step to avoid re-fetching deps on every code change
+# fetch is a pnpm command that downloads all dependencies to the local store
+# You could remove or skip this step if using npm or yarn (but make sure to copy your lock file)
+FROM pnpm_base as fetched_deps
+WORKDIR /app
+ENV NODE_ENV production
+COPY pnpm-lock.yaml ./
+RUN pnpm config set store-dir /workdir/.pnpm-store
+RUN pnpm fetch
+
+# STAGE 3: Copy the application code and install all deps from cache into the application
+FROM fetched_deps as with_all_deps
+COPY . ./
+RUN pnpm install
+
+# STAGE 4: Build the NextJS app
+# Here we use pnpm filtering to only build the frontend app
+# Then we use pnpm deploy command to prune the dependencies
+FROM with_all_deps as builder
+RUN pnpm build
+RUN pnpm deploy pruned --prod
+
+# STAGE 5: Create a clean production image - only take pruned assets
+FROM node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 app
+RUN adduser --system --uid 1001 app
+USER app
+
+# We copy the built NextJS app assets from the builder stage
+# NextJS produces a backend server and a frontend app
+COPY --chown=app:app --from=builder /app/apps/frontend/.next/standalone src/
+COPY --chown=app:app --from=builder /app/apps/frontend/public src/apps/frontend/public
+COPY --chown=app:app --from=builder /app/apps/frontend/.next/static src/apps/frontend/.next/static
+
+# Set the port that the NextJS app will run on
+# You should choose a port that is supported by your cloud provider
+ENV PORT 3000
+# Expose the port to the outside world
 EXPOSE 3000
 
-FROM base as builder
-WORKDIR /app
-COPY . .
-RUN npm run build
-
-
-FROM base as production
-WORKDIR /app
-
-ENV NODE_ENV=production
-RUN npm ci
-
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-USER nextjs
-
-
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/public ./public
-
-CMD npm start
-
-FROM base as dev
-ENV NODE_ENV=development
-RUN npm install 
-COPY . .
-CMD npm run dev
+# Finally, we run the NextJS app
+CMD ["node", "src/apps/frontend/server.js"]
