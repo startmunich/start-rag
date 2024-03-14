@@ -38,4 +38,4 @@ COPY --chown=app:app --from=builder /app/public src/public
 COPY --chown=app:app --from=builder /app/.next/static src/.next/static
 ENV PORT 3000
 EXPOSE 3000
-CMD ["node", "src/apps/frontend/server.js"]
+CMD ["node", "src/server.js"]
