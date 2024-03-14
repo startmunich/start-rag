@@ -12,12 +12,14 @@ import langchain.text_splitter
 from langchain_community.embeddings import InfinityEmbeddings
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import PointStruct, FilterSelector, Filter, FieldCondition, MatchValue
+from qdrant_client.http.models import PointStruct, FilterSelector, Filter, FieldCondition, MatchValue, VectorParams
 import threading
+import requests
 import json
 import queue
 import time
 import os
+import numpy as np
 
 
 app = Flask(__name__)
@@ -32,7 +34,7 @@ neo4j_driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password)
 # Initialize Qdrant client
 qdrant_uri = os.environ.get("QDRANT_URL")
 qdrant_collection_name = os.environ.get("QDRANT_COLLECTION_NAME")
-qdrant_client = QdrantClient(qdrant_uri, qdrant_collection_name)
+qdrant_client = QdrantClient(url=qdrant_uri,port=6333)
 
 # initialize infinity
 infinity_api_url = os.environ.get("INFINITY_URL")
@@ -55,6 +57,8 @@ markdown_splitter = langchain.text_splitter.MarkdownHeaderTextSplitter(headers_t
 
 # Queue for storing IDs to be processed
 id_queue = queue.Queue()
+
+# model = SentenceTransformer(infinity_model)
 
 
 def process_queue():
@@ -104,18 +108,14 @@ def process_queue():
 
                 # Embed the chunks using Infinity
 
-                embeddings = InfinityEmbeddings(model=infinity_model, 
-                                                infinity_api_url=infinity_api_url
-                )
-                chunks_embedded = []
-                try:
-                    chunks_embedded = embeddings.embed_documents(chunks)
-                    app.logger.info(f"embeddings of {id_queue} created successful")
-                except Exception as ex:
-                    app.logger.info(
-                        "Make sure the infinity instance is running. Verify by clicking on "
-                        f"{infinity_api_url.replace('v1','docs')} Exception: {ex}. "
-                    )
+                
+                embeddings = InfinityEmbeddings(
+                                model=infinity_model, infinity_api_url=infinity_api_url
+                            )
+                
+                chunks_embedded = embeddings.embed_documents(chunks)
+                print("embeddings created successful")
+                
                 
 
                 # delete all points with the same id_to_process
@@ -133,12 +133,18 @@ def process_queue():
                                     )
 
                 # Insert the preprocessed chunk into Qdrant
+                info = qdrant_client.info(collection_name=qdrant_collection_name)
+                
+                points_to_update = [PointStruct(id=info["result"]["vectors_count"] + count, 
+                                                vector=chunk_embedding.tolist(),
+                                                payload={"content": chunk, "page_id": id_to_process}) for count, (chunk_embedding, chunk) in enumerate(zip(chunks_embedded, chunks))]
+                
+                app.logger.info(f"points_to_update: {points_to_update}")
+
                 qdrant_client.upsert(
                     collection_name=qdrant_collection_name,
-                    wait=True,
-                    points=[PointStruct(id=f"{id_to_process}_{count}", 
-                                        vector=chunk_embedding, payload={"content": chunk, "page_id": id_to_process}) for count, chunk_embedding, chunk in zip(enumerate(chunks_embedded), chunks)]
-                )
+                    points= points_to_update
+                    )
                 
         else:
             # wait 10 seconds before checking the queue again
@@ -167,6 +173,13 @@ if __name__ == '__main__':
     queue_processor_thread = threading.Thread(target=process_queue)
     queue_processor_thread.daemon = True
     queue_processor_thread.start()
+
+    # check if qdrant collection exists
+    if requests.get(url=f"{qdrant_uri}/collections/{qdrant_collection_name}/exists").json()["result"]["exists"] == False:
+        # create collection if not exists
+        qdrant_client.create_collection(collection_name=qdrant_collection_name, 
+                                        vectors_config=VectorParams(size=384, distance="Cosine"),
+                                        on_disk_payload=True,)
 
     # Start Flask API
     app.run(debug=True, host='0.0.0.0')
