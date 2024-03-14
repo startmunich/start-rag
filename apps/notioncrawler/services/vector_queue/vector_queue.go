@@ -38,12 +38,12 @@ func (v *VectorQueue) Enqueue(payload *EnqueuePayload) error {
 		return err
 	}
 
-	if res, err := http.NewRequest("POST", url, bytes.NewBuffer(body)); err != nil {
+	if res, err := http.Post(url, "application/json", bytes.NewBuffer(body)); err != nil {
 		return err
-	} else if res.Response == nil {
+	} else if res == nil {
 		return errors.New(fmt.Sprintf("Could not reach %s", url))
-	} else if res.Response.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Failed with status code %d", res.Response.StatusCode))
+	} else if res.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("Failed with status code %d", res.StatusCode))
 	}
 	return nil
 }
