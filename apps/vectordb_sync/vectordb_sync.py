@@ -12,7 +12,7 @@ import langchain.text_splitter
 from langchain_community.embeddings import InfinityEmbeddings
 from langchain_community.document_loaders.csv_loader import CSVLoader
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import PointStruct
+from qdrant_client.http.models import PointStruct, FilterSelector, Filter, FieldCondition, MatchValue
 import threading
 import json
 import queue
@@ -58,9 +58,12 @@ id_queue = queue.Queue()
 
 
 def process_queue():
+    app.logger.info(f"start process_queue")
     while True:
         if not id_queue.empty():
+            app.logger.info(f"id_queue not empty")
             id_to_process = id_queue.get()
+            app.logger.info(f"processing id {id_to_process}")
             with neo4j_driver.session() as session:
                 result = session.run(
                     "MATCH (n:CrawledPage {page_id: $id}) RETURN n.content AS content",
@@ -78,15 +81,15 @@ def process_queue():
                     # check if content_type is markdown or database
                     if element['content_type'] == 'markdown':
                         # apply markdown_splitter and add to complete_content
-                        complete_content += markdown_splitter.split_text(element['content'])
+                        markdown_documents = markdown_splitter.split_text(element['content'])
+                        markdown_strings = [document.page_content for document in markdown_documents]
+                        complete_content += markdown_strings
                     elif element['content_type'] == 'database':
                         # create temp csv file and apply csv_loader and add to complete_content
                         with open('temp.csv', 'w') as file:
                             file.write(element['content'])
                         csv_loader = CSVLoader("temp.csv")
-                        database_elements = []
-                        for document in csv_loader.load():
-                            database_elements.append(document.page_content)
+                        database_elements = [document.page_content for document in csv_loader.load()]
                         database_content = "\n\n".join(database_elements)
                         complete_content += text_splitter.split_text(database_content)
                     else:
@@ -104,29 +107,42 @@ def process_queue():
                 embeddings = InfinityEmbeddings(model=infinity_model, 
                                                 infinity_api_url=infinity_api_url
                 )
+                chunks_embedded = []
                 try:
                     chunks_embedded = embeddings.embed_documents(chunks)
-                    print(f"embeddings of {id_queue} created successful")
+                    app.logger.info(f"embeddings of {id_queue} created successful")
                 except Exception as ex:
-                    print(
+                    app.logger.info(
                         "Make sure the infinity instance is running. Verify by clicking on "
                         f"{infinity_api_url.replace('v1','docs')} Exception: {ex}. "
                     )
                 
+
                 # delete all points with the same id_to_process
-                qdrant_client.delete_by_id(collection_name=qdrant_collection_name, ids=[f"{id_to_process}_*"])
+                qdrant_client.delete(collection_name=qdrant_collection_name,     
+                                     points_selector=FilterSelector(
+                                        filter=Filter(
+                                            must=[
+                                                FieldCondition(
+                                                    key="page_id",
+                                                    match=MatchValue(value=id_to_process),
+                                                ),
+                                            ],
+                                        )
+                                    ),
+                                    )
 
                 # Insert the preprocessed chunk into Qdrant
                 qdrant_client.upsert(
                     collection_name=qdrant_collection_name,
                     wait=True,
                     points=[PointStruct(id=f"{id_to_process}_{count}", 
-                                        vector=chunk_embedding, payload={"content": chunk}) for count, chunk_embedding, chunk in zip(enumerate(chunks_embedded), chunks)]
+                                        vector=chunk_embedding, payload={"content": chunk, "page_id": id_to_process}) for count, chunk_embedding, chunk in zip(enumerate(chunks_embedded), chunks)]
                 )
                 
         else:
             # wait 10 seconds before checking the queue again
-            print("Queue is empty, waiting for 10 seconds")
+            app.logger.info("Queue is empty, waiting for 10 seconds")
             time.sleep(10)
 
 
