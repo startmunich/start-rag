@@ -40,6 +40,8 @@ func (v *VectorQueue) Enqueue(payload *EnqueuePayload) error {
 
 	if res, err := http.NewRequest("POST", url, bytes.NewBuffer(body)); err != nil {
 		return err
+	} else if res.Response == nil {
+		return errors.New(fmt.Sprintf("Could not reach %s", url))
 	} else if res.Response.StatusCode != 200 {
 		return errors.New(fmt.Sprintf("Failed with status code %d", res.Response.StatusCode))
 	}
