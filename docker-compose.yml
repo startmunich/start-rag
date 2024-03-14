@@ -73,13 +73,14 @@ services:
     depends_on:
       - neo4j
       - qdrant
+      - infinity
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j
       NEO4J_PASS: redbull_wildberry
-      QDRANT_URL: qdrant:6333
+      QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
-      INFINITY_URL: http://infinity:7997/v1
+      INFINITY_URL: http://infinity:7997
       INFINITY_MODEL: BAAI/bge-small-en
     env_file:
       - .env
