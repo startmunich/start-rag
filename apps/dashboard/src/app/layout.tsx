@@ -4,18 +4,16 @@ import "./globals.css";
 import Dashboard from "@/components/dashboard";
 import useCrawlerState from "@/hooks/useCrawlerState";
 import CrawlerContext from "@/context/crawlerContext";
+import { NotionLogoIcon } from "@radix-ui/react-icons";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const accounts = [
+export const crawler = [
   {
-    label: "Alicia Koch",
-    email: "alicia@example.com",
+    label: "START Notion",
+    name: "START Notion",
     icon: (
-      <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <title>Vercel</title>
-        <path d="M24 22.525H0l12-21.05 12 21.05z" fill="currentColor" />
-      </svg>
+      <NotionLogoIcon className="w-5 h-5" />
     ),
   }
 ];
@@ -25,13 +23,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const crawlerState = useCrawlerState("http://localhost:3111");
+  const crawlerState = useCrawlerState(process.env.NEXT_PUBLIC_CRAWLER_API_BASE_PATH!);
   return (
     <html lang="en">
       <body className={inter.className}>
         <CrawlerContext.Provider value={crawlerState}>
           <Dashboard
-            accounts={accounts}
+            crawler={crawler}
             defaultLayout={[265, 440, 655]}
             children={children}
           />

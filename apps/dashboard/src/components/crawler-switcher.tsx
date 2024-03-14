@@ -11,21 +11,21 @@ import {
   SelectValue,
 } from "./ui/select";
 
-interface AccountSwitcherProps {
+interface CrawlerSwitcherProps {
   isCollapsed: boolean;
-  accounts: {
+  crawler: {
     label: string;
-    email: string;
+    name: string;
     icon: React.ReactNode;
   }[];
 }
 
-export function AccountSwitcher({
+export function CrawlerSwitcher({
   isCollapsed,
-  accounts,
-}: AccountSwitcherProps) {
+  crawler,
+}: CrawlerSwitcherProps) {
   const [selectedAccount, setSelectedAccount] = React.useState<string>(
-    accounts[0].email,
+    crawler[0].name,
   );
 
   return (
@@ -39,21 +39,21 @@ export function AccountSwitcher({
         aria-label="Select account"
       >
         <SelectValue placeholder="Select an account">
-          {accounts.find((account) => account.email === selectedAccount)?.icon}
+          {crawler.find((account) => account.name === selectedAccount)?.icon}
           <span className={cn("ml-2", isCollapsed && "hidden")}>
             {
-              accounts.find((account) => account.email === selectedAccount)
+              crawler.find((account) => account.name === selectedAccount)
                 ?.label
             }
           </span>
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {accounts.map((account) => (
-          <SelectItem key={account.email} value={account.email}>
+        {crawler.map((account) => (
+          <SelectItem key={account.name} value={account.name}>
             <div className="flex items-center gap-3 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:text-foreground">
               {account.icon}
-              {account.email}
+              {account.name}
             </div>
           </SelectItem>
         ))}

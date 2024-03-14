@@ -65,6 +65,13 @@ func (m *Manager) UpdateLastRunStartedAt(lastRunStartedAt int64) *Manager {
 	return m
 }
 
+func (m *Manager) UpdateNextRunAt(nextRunAt int64) *Manager {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.state.NextRunAt = nextRunAt
+	return m
+}
+
 func (m *Manager) GetState() State {
 	m.lock.Lock()
 	defer m.lock.Unlock()

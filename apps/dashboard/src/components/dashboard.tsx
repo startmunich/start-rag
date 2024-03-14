@@ -6,18 +6,17 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "./ui/resizable";
-import { AccountSwitcher } from "./account-switcher";
+import { CrawlerSwitcher } from "./crawler-switcher";
 import { Separator } from "@radix-ui/react-select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Nav } from "./nav";
 import { cn } from "@/lib/utils";
 import { useContext } from "react";
 import CrawlerContext from "@/context/crawlerContext";
 
 interface DashboardProps {
-  accounts: {
+  crawler: {
     label: string;
-    email: string;
+    name: string;
     icon: React.ReactNode;
   }[];
   defaultLayout: number[];
@@ -25,7 +24,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  accounts,
+  crawler,
   defaultLayout,
   children,
 }: DashboardProps) {
@@ -53,7 +52,7 @@ export default function Dashboard({
               "flex h-[52px] items-center justify-center px-2",
             )}
           >
-            <AccountSwitcher isCollapsed={false} accounts={accounts} />
+            <CrawlerSwitcher isCollapsed={false} crawler={crawler} />
           </div>
           <Separator />
           <Nav

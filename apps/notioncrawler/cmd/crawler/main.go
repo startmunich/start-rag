@@ -47,6 +47,8 @@ func main() {
 
 	port := mustEnv("PORT")
 
+	reRunDelayDuration := time.Second * time.Duration(reRunDelaySec)
+
 	vectorQueue := vector_queue.New(vectorQueueUrl)
 
 	neo4jOptions := crawler.Neo4jOptions{
@@ -107,7 +109,13 @@ func main() {
 
 		elapsed := time.Since(start)
 		log.Printf("Notioncrawler took %s", elapsed)
-		stateMgr.UpdateIsRunning(false).UpdateLastRunDuration(uint64(elapsed.Milliseconds())).UpdateLastRunEndedAt(time.Now().UTC().UnixMilli())
-		time.Sleep(time.Second * time.Duration(reRunDelaySec))
+		stateMgr.UpdateIsRunning(false).UpdateLastRunDuration(
+			uint64(elapsed.Milliseconds()),
+		).UpdateLastRunEndedAt(
+			time.Now().UTC().UnixMilli(),
+		).UpdateNextRunAt(
+			time.Now().UTC().UnixMilli() + reRunDelayDuration.Milliseconds(),
+		)
+		time.Sleep(reRunDelayDuration)
 	}
 }

@@ -8,6 +8,7 @@ const CrawlerContext = createContext<CrawlerState>({
     lastRunDuration: 0,
     lastRunStartedAt: 0,
     lastRunEndedAt: 0,
+    nextRunAt: 0,
 });
 
 export default CrawlerContext;

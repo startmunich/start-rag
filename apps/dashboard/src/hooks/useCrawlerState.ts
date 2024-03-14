@@ -7,6 +7,7 @@ export interface CrawlerState {
     lastRunDuration: number;
     lastRunStartedAt: number;
     lastRunEndedAt: number;
+    nextRunAt: number;
 };  
 
 export default function useCrawlerState(basePath: string): CrawlerState {
@@ -17,6 +18,7 @@ export default function useCrawlerState(basePath: string): CrawlerState {
         lastRunDuration: 0,
         lastRunStartedAt: 0,
         lastRunEndedAt: 0,
+        nextRunAt: 0,
     });
 
     useEffect(() => {

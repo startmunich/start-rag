@@ -8,4 +8,5 @@ type State struct {
 	LastRunDuration  uint64 `json:"lastRunDuration"`
 	LastRunStartedAt int64  `json:"lastRunStartedAt"`
 	LastRunEndedAt   int64  `json:"lastRunEndedAt"`
+	NextRunAt        int64  `json:"nextRunAt"`
 }
