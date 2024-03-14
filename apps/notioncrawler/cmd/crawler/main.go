@@ -51,10 +51,6 @@ func main() {
 
 	vectorQueue := vector_queue.New(vectorQueueUrl)
 
-	println("Waiting for Vector Queue ...")
-	vectorQueue.WaitForReady()
-	println("Vector Queue is ready")
-
 	neo4jOptions := crawler.Neo4jOptions{
 		Address:  neo4jUrl,
 		Username: neo4jUser,
@@ -76,6 +72,10 @@ func main() {
 	stateMgr := state.New()
 
 	go api.Run(stateMgr, neo4jOptions, fmt.Sprintf(":%s", port))
+
+	println("Waiting for Vector Queue ...")
+	vectorQueue.WaitForReady()
+	println("Vector Queue is ready")
 
 	// USE Exporter to crawl children
 	metaCrawler := unofficial_meta_crawler.New(notionClient)
