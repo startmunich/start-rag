@@ -31,8 +31,9 @@ export default function RootLayout({
           <Dashboard
             crawler={crawler}
             defaultLayout={[265, 440, 655]}
-            children={children}
-          />
+          >
+            {children}
+          </Dashboard>
         </CrawlerContext.Provider>
       </body>
     </html>

@@ -1,38 +1,6 @@
 version: '3.4'
 
 services:
-  # traefik:
-  #   image: "traefik:v3.0.0-beta4"
-  #   ports:
-  #     - target: 80
-  #       published: 80
-  #       mode: host
-  #     - target: 443
-  #       published: 443
-  #       mode: host
-  #   deploy:
-  #     placement:
-  #       constraints:
-  #         # Make the traefik service run only on the node with this label
-  #         # as the node with it has the volume for the certificates
-  #         - node.labels.traefik-public.traefik-public-certificates == true
-  #   labels:
-  #     - traefik.enable=true
-  #     - traefik.http.routers.traefik-public-http.rule=Host(`monitor.maltego.local`)
-  #     - traefik.http.routers.traefik-public-http.entrypoints=http
-  #     - traefik.http.services.traefik-public.loadbalancer.server.port=8080
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #   command:
-  #     - --providers.docker
-  #     - --providers.docker.exposedbydefault=false
-  #     - --entrypoints.http.address=:80
-  #     - --entrypoints.http.address=:443
-  #     - --api
-  #     - --api.dashboard=true
-  #     - --api.insecure=true
-      #- --log.level=DEBUG
-
   qdrant:
     image: "qdrant/qdrant"
     hostname: qdrant
@@ -84,15 +52,14 @@ services:
       - .env
       - .env.local
 
-  # dashboard:
-  #   build:
-  #     context: ./apps/dashboard
-  #     target: production
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - NEXT_PUBLIC_CRAWLER_API_BASE_PATH=http://notioncrawler:8000
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_CRAWLER_API_BASE_PATH=http://notioncrawler:8000
 
   vectordb_sync:
     hostname: vectordb_sync

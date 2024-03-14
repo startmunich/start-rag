@@ -3,6 +3,7 @@ package vector_queue
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -25,8 +26,10 @@ func (v *VectorQueue) Enqueue(payload *EnqueuePayload) error {
 		return err
 	}
 
-	if _, err := http.NewRequest("POST", url, bytes.NewBuffer(body)); err != nil {
+	if res, err := http.NewRequest("POST", url, bytes.NewBuffer(body)); err != nil {
 		return err
+	} else if res.Response.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("Failed with status code %d", res.Response.StatusCode))
 	}
 	return nil
 }

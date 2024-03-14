@@ -1,35 +1,41 @@
-FROM node:18-alpine as base
+# STAGE 1: A container with pnpm and python3 is required
+FROM node:21-alpine as pnpm_base
+
+WORKDIR /app
+RUN npm i --global --no-update-notifier --no-fund pnpm@8
 RUN apk add --no-cache g++ make py3-pip libc6-compat
+
+# STAGE 2: fetch deps into the pnpm store
+# We run pnpm fetch in a separate step to avoid re-fetching deps on every code change
+# fetch is a pnpm command that downloads all dependencies to the local store
+# You could remove or skip this step if using npm or yarn (but make sure to copy your lock file)
+FROM pnpm_base as fetched_deps
 WORKDIR /app
-COPY package*.json ./
-EXPOSE 3000
+COPY pnpm-lock.yaml ./
+RUN pnpm config set store-dir /workdir/.pnpm-store
+RUN pnpm fetch
 
-FROM base as builder
+# STAGE 3: Copy the application code and install all deps from cache into the application
+FROM fetched_deps as with_all_deps
+COPY . ./
+RUN pnpm i
+
+# STAGE 4: Build the NextJS app
+# Here we use pnpm filtering to only build the frontend app
+# Then we use pnpm deploy command to prune the dependencies
+FROM with_all_deps as builder
+RUN pnpm build
+
+# STAGE 5: Create a clean production image - only take pruned assets
+FROM node:18-alpine AS runner
 WORKDIR /app
-COPY . .
-RUN npm run build
-
-
-FROM base as production
-WORKDIR /app
-
 ENV NODE_ENV=production
-RUN npm ci
-
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-USER nextjs
-
-
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/public ./public
-
-CMD npm start
-
-FROM base as dev
-ENV NODE_ENV=development
-RUN npm install 
-COPY . .
-CMD npm run dev
+RUN addgroup --system --gid 1001 app
+RUN adduser --system --uid 1001 app
+USER app
+COPY --chown=app:app --from=builder /app/.next/standalone src/
+COPY --chown=app:app --from=builder /app/public src/public
+COPY --chown=app:app --from=builder /app/.next/static src/.next/static
+ENV PORT 3000
+EXPOSE 3000
+CMD ["node", "src/server.js"]

@@ -29,7 +29,7 @@ export default function useCrawlerState(basePath: string): CrawlerState {
         }, 3000);
 
         return () => clearTimeout(timeout);
-    }, []);
+    }, [basePath]);
 
     return state;
 }

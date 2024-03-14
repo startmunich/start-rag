@@ -70,10 +70,8 @@ services:
 
   notioncrawler:
     platform: "linux/amd64"
+    image: startmunich/notioncrawler:latest
     restart: always
-    build:
-      context: ./apps/notioncrawler
-      dockerfile: Dockerfile
     depends_on:
       - neo4j
     ports:
@@ -89,10 +87,7 @@ services:
       PORT: 5001
 
   dashboard:
-    build:
-      context: ./apps/dashboard
-      target: production
-      dockerfile: Dockerfile
+    image: startmunich/notioncrawler:latest
     ports:
       - "3000:3000"
     environment:
