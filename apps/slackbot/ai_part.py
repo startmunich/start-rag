@@ -1,17 +1,18 @@
 import os
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import replicate
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.tools.retriever import create_retriever_tool
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores.qdrant import Qdrant
 from qdrant_client import QdrantClient
-from langchain_core.vectorstores import VectorStoreRetriever
 
+
+# Load the environment variables
 replicate_api_key = os.environ["REPLICATE_API_KEY"]
 qdrant_uri = os.environ["QDRANT_URL"]
 
-
+# Create the Qdrant vector store
 qdrant_db = Qdrant(
     client=QdrantClient(url=qdrant_uri, port=6333),
     collection_name="startgpt",
@@ -20,8 +21,10 @@ qdrant_db = Qdrant(
     distance_strategy="Cosine",
 )
 
-retriever = VectorStoreRetriever(vector_store=qdrant_db)
+# Create the retriever
+retriever = qdrant_db.as_retriever("mmr", search_kwargs={"k": 5, "fetch_k": 20})
 
+# Create the language model
 llm = replicate(
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
@@ -29,8 +32,33 @@ llm = replicate(
     model_kwargs={"temperature": 0.75, "max_length": 500, "top_p": 1},
 )
 
-prompt = """
-User: Answer the following yes/no question by reasoning step by step. Can a dog drive a car?
-Assistant:
+# Create the prompt template
+prompt_template = """ 
+It is December 2023. You are StartGPT, an assistant for question-answering tasks. Users reach out to you only via Slack. You serve a student led organization START Munich. 
+The context you get will be from our Notionpage. Use the following pieces of retrieved context to answer the question. 
+You decide what's more useful. If you don't know the answer, just say that you don't know.
+Here's the question and the context:
+
+<Beginning of question>
+{question}
+<End of question>
+
+<Beginning of context>
+{notion} 
+<End of context>
 """
-_ = llm(prompt)
+
+# Initialize prompt
+prompt_template = PromptTemplate(input_variables=["question", "notion"], template=prompt_template)
+
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=retriever,
+    chain_type_kwargs={"prompt": prompt_template},
+)
+
+# create function to invoke the retrievalQA
+def get_answer(question: str) -> str:
+    
+    # retrieve the context from the database
+    qa_chain({"query": question})
