@@ -97,9 +97,11 @@ services:
       - qdrant
       - infinity
     environment:
-      - REPLICATE_API_KEY: 
       - QDRANT_URL: http://qdrant:6333
       - QDRANT_COLLECTION_NAME: startgpt
       - INFINITY_URL: http://infinity:7997
       - INFINITY_MODEL: BAAI/bge-small-en
+    env_file:
+      - .env
+      - .env.local
 

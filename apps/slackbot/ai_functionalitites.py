@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import replicate
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
@@ -8,7 +9,9 @@ from qdrant_client import QdrantClient
 from langchain_community.embeddings import InfinityEmbeddings
 
 
+
 # Load the environment variables
+load_dotenv(dotenv_path=".env.local")
 replicate_api_key = os.environ["REPLICATE_API_KEY"]
 qdrant_uri = os.environ["QDRANT_URL"]
 qdrant_collection_name = os.environ.get("QDRANT_COLLECTION_NAME")
@@ -22,7 +25,7 @@ qdrant_db = Qdrant(
     content_payload_key="content",
     metadata_payload_key="page_id",
     distance_strategy="Cosine",
-    embedding_function=InfinityEmbeddings(model=infinity_model, infinity_api_url=infinity_api_url)
+    embeddings=InfinityEmbeddings(model=infinity_model, infinity_api_url=infinity_api_url)
 )
 
 # Create the retriever
