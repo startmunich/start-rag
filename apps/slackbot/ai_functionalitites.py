@@ -2,23 +2,27 @@ import os
 from langchain.prompts import PromptTemplate
 from langchain_community.llms import replicate
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.tools.retriever import create_retriever_tool
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores.qdrant import Qdrant
 from qdrant_client import QdrantClient
+from langchain_community.embeddings import InfinityEmbeddings
 
 
 # Load the environment variables
 replicate_api_key = os.environ["REPLICATE_API_KEY"]
 qdrant_uri = os.environ["QDRANT_URL"]
+qdrant_collection_name = os.environ.get("QDRANT_COLLECTION_NAME")
+infinity_api_url = os.environ.get("INFINITY_URL")
+infinity_model = os.environ.get("INFINITY_MODEL")
 
 # Create the Qdrant vector store
 qdrant_db = Qdrant(
     client=QdrantClient(url=qdrant_uri, port=6333),
-    collection_name="startgpt",
+    collection_name=qdrant_collection_name,
     content_payload_key="content",
     metadata_payload_key="page_id",
     distance_strategy="Cosine",
+    embedding_function=InfinityEmbeddings(model=infinity_model, infinity_api_url=infinity_api_url)
 )
 
 # Create the retriever
@@ -60,5 +64,5 @@ qa_chain = RetrievalQA.from_chain_type(
 # create function to invoke the retrievalQA
 def get_answer(question: str) -> str:
     
-    # retrieve the context from the database
-    qa_chain({"query": question})
+    response = qa_chain({"query": question})
+    return response["result"]
