@@ -32,8 +32,10 @@ sentences = [sentence1, sentence2, sentence3]
 while True:
     try:
         requests.get(url=f"{infinity_api_url}/ready")
+        print("Infinity is ready")
         break
     except:
+        print("Waiting for infinity to be ready")
         time.sleep(1)
 sentences_embedded = [requests.post(url=f"{infinity_api_url}/embeddings",
                                    json={"model": "bge-small-en-v1.5", "input": [sentence]}).json()["data"][0][
