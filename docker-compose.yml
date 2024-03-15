@@ -97,7 +97,7 @@ services:
       - qdrant
       - infinity
     environment:
-      - REPLICATE_API_KEY: r8_NUUMxR3iQLHM9sI6aAk7rlTp21gJ3Z91ten7I
+      - REPLICATE_API_KEY: 
       - QDRANT_URL: http://qdrant:6333
       - QDRANT_COLLECTION_NAME: startgpt
       - INFINITY_URL: http://infinity:7997
