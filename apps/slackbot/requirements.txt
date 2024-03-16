@@ -6,6 +6,3 @@ langchain_community
 langchainhub
 replicate == 0.24.0
 qdrant-client == 1.6.4
-dotenv
-os
-json
