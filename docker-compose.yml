@@ -55,11 +55,9 @@ services:
   dashboard:
     build:
       context: ./apps/dashboard
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_CRAWLER_API_BASE_PATH=http://notioncrawler:8000
 
   vectordb_sync:
     hostname: vectordb_sync

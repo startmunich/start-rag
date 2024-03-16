@@ -39,15 +39,15 @@ services:
   qdrant:
     image: "qdrant/qdrant"
     hostname: qdrant
-    ports:
-      - "6333:6333"
+    expose:
+      - "6333"
 
   infinity:
     image: "michaelf34/infinity"
     hostname: infinity
     command: --model-name-or-path BAAI/bge-small-en
-    ports:
-      - "7997:7997"
+    expose:
+      - "7997"
 
   neo4j:
     hostname: neo4j
@@ -56,9 +56,9 @@ services:
     volumes:
       - '$HOME/startgpt/neo4j/data:/data'
       - '$HOME/startgpt/neo4j/conf/:/conf/'
-    ports:
-      - "7474:7474"
-      - "7687:7687"
+    expose:
+      - "7474"
+      - "7687"
     environment:
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*,algo.*
       - NEO4J_apoc_uuid_enabled=true
@@ -74,8 +74,8 @@ services:
     restart: always
     depends_on:
       - neo4j
-    ports:
-      - "5001:5001"
+    expose:
+      - "5001"
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j
@@ -85,26 +85,33 @@ services:
       START_PAGE_ID: $START_PAGE_ID
       TOKEN_V2: $TOKEN_V2
       PORT: 5001
+    labels:
+      - traefik.http.services.traefik-public.loadbalancer.server.port=5001
+      - "traefik.http.routers.notioncrawler-http.entrypoints=web"
+      - "traefik.http.routers.notioncrawler-http.rule=Host(`crawler.rag.start.khadim.io`)"
+      - "traefik.http.routers.notioncrawler-http.middlewares=notioncrawler-https"
+      - "traefik.http.middlewares.notioncrawler-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.notioncrawler.entrypoints=websecure"
+      - "traefik.http.routers.notioncrawler.rule=Host(`crawler.rag.start.khadim.io`)"
+      - "traefik.http.routers.notioncrawler.tls=true"
 
   dashboard:
     image: startmunich/notioncrawler:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_CRAWLER_API_BASE_PATH=http://notioncrawler:5001
+    expose:
+      - "3000"
     labels:
       - "traefik.http.routers.dashboard-http.entrypoints=web"
-      - "traefik.http.routers.dashboard-http.rule=Host(`dash.start.khadim.io`)"
+      - "traefik.http.routers.dashboard-http.rule=Host(`monitor.rag.start.khadim.io`)"
       - "traefik.http.routers.dashboard-http.middlewares=dashboard-https"
       - "traefik.http.middlewares.dashboard-https.redirectscheme.scheme=https"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.rule=Host(`dash.start.khadim.io`)"
+      - "traefik.http.routers.dashboard.rule=Host(`monitor.rag.start.khadim.io`)"
       - "traefik.http.routers.dashboard.tls=true"
 
   vectordb_sync:
     hostname: vectordb_sync
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     platform: "linux/amd64"
     restart: always
     build:
