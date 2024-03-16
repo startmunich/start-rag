@@ -7,7 +7,7 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from apps.slackbot import ai_functionalitites
 
-load_dotenv(dotenv_path=".env")
+# load_dotenv(dotenv_path=".env")
 
 # load dict with registered users
 with open("registered_users.json", "r") as f:
