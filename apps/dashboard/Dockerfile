@@ -24,6 +24,7 @@ RUN pnpm i
 # Here we use pnpm filtering to only build the frontend app
 # Then we use pnpm deploy command to prune the dependencies
 FROM with_all_deps as builder
+ENV NODE_ENV=production
 RUN pnpm build
 
 # STAGE 5: Create a clean production image - only take pruned assets
