@@ -13,7 +13,7 @@ from langchain import hub
 
 
 # Load and export the environment variables
-load_dotenv(dotenv_path="apps/slackbot/.env.local")
+# load_dotenv(dotenv_path="apps/slackbot/.env.local")
 
 
 
