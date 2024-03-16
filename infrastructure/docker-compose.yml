@@ -85,6 +85,7 @@ services:
       START_PAGE_ID: $START_PAGE_ID
       TOKEN_V2: $TOKEN_V2
       PORT: 5001
+      CORS: monitor.rag.start.khadim.io
     labels:
       - traefik.http.services.traefik-public.loadbalancer.server.port=5001
       - "traefik.http.routers.notioncrawler-http.entrypoints=web"

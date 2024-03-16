@@ -48,6 +48,7 @@ services:
       NEO4J_USER: neo4j
       NEO4J_PASS: redbull_wildberry
       VECTOR_QUEUE_URL: http://vectordb_sync:5000
+      CORS: "*"
     env_file:
       - .env
       - .env.local

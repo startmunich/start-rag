@@ -47,6 +47,8 @@ func main() {
 
 	port := mustEnv("PORT")
 
+	corsDomains := mustEnv("CORS")
+
 	reRunDelayDuration := time.Second * time.Duration(reRunDelaySec)
 
 	vectorQueue := vector_queue.New(vectorQueueUrl)
@@ -71,7 +73,7 @@ func main() {
 
 	stateMgr := state.New()
 
-	go api.Run(stateMgr, neo4jOptions, fmt.Sprintf(":%s", port))
+	go api.Run(stateMgr, neo4jOptions, fmt.Sprintf(":%s", port), corsDomains)
 
 	println("Waiting for Vector Queue ...")
 	vectorQueue.WaitForReady()

@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 	"notioncrawl/services/state"
 )
 
-func Run(state *state.Manager, neo4jOptions crawler.Neo4jOptions, addr string) {
+func Run(state *state.Manager, neo4jOptions crawler.Neo4jOptions, addr string, corsDomains string) {
 	neo4j, err := neo4j.NewDriverWithContext(neo4jOptions.Address, neo4j.BasicAuth(neo4jOptions.Username, neo4jOptions.Password, ""))
 	if err != nil {
 		panic(err)
@@ -20,6 +21,10 @@ func Run(state *state.Manager, neo4jOptions crawler.Neo4jOptions, addr string) {
 	ctrl := controller.New(neo4j)
 
 	app := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: corsDomains,
+	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Notion Crawler")
