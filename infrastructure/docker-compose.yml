@@ -129,3 +129,24 @@ services:
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997/v1
       INFINITY_COLLECTION_NAME: bge-small-en
+
+  slackbot:
+    hostname: slackbot
+    platform: "linux/amd64"
+    restart: always
+    build:
+      context: ./apps/slackbot
+      dockerfile: Dockerfile
+    depends_on:
+      - qdrant
+      - infinity
+    environment:
+      - QDRANT_URL: http://qdrant:6333
+      - QDRANT_COLLECTION_NAME: startgpt
+      - INFINITY_URL: http://infinity:7997
+      - INFINITY_MODEL: BAAI/bge-small-en
+      - SLACK_APP_TOKEN: $SLACK_APP_TOKEN
+      - SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
+      - REPLICATE_API_TOKEN: $REPLICATE_API_TOKEN
+      - LLM_MODEL: mistralai/mistral-7b-instruct-v0.2:79052a3adbba8116ebc6697dcba67ad0d58feff23e7aeb2f103fc9aa545f9269
+      
