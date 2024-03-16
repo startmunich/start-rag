@@ -69,8 +69,7 @@ services:
       - NEO4J_AUTH=neo4j/redbull_wildberry
 
   notioncrawler:
-    platform: "linux/amd64"
-    image: startmunich/notioncrawler:latest
+    image: ghcr.io/startmunich/notioncrawler:latest
     restart: always
     depends_on:
       - neo4j
@@ -97,7 +96,7 @@ services:
       - "traefik.http.routers.notioncrawler.tls=true"
 
   dashboard:
-    image: startmunich/notioncrawler:latest
+    image: ghcr.io/startmunich/dashboard:latest
     expose:
       - "3000"
     labels:
@@ -113,11 +112,8 @@ services:
     hostname: vectordb_sync
     expose:
       - "5000"
-    platform: "linux/amd64"
     restart: always
-    build:
-      context: ./apps/vectordb_sync
-      dockerfile: Dockerfile
+    image: ghcr.io/startmunich/vectordb_sync:latest
     depends_on:
       - neo4j
       - qdrant
@@ -132,11 +128,8 @@ services:
 
   slackbot:
     hostname: slackbot
-    platform: "linux/amd64"
     restart: always
-    build:
-      context: ./apps/slackbot
-      dockerfile: Dockerfile
+    image: ghcr.io/startmunich/slackbot:latest
     depends_on:
       - qdrant
       - infinity
