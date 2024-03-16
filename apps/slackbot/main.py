@@ -5,7 +5,7 @@ from dotenv import load_dotenv, dotenv_values
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from slackbot import ai_functionalitites
+from apps.slackbot import ai_functionalitites
 
 load_dotenv(dotenv_path=".env")
 
@@ -32,9 +32,7 @@ def event_test(event, say):
     text_split = text.split("<@U066N58KTUP>")
     query = text_split[1].strip() if len(text_split) > 1 else ""
     
-    say(ai_functionalitites.get_answer(query))
-
-    return
+    say(f"<@{user}>" + " " + ai_functionalitites.get_answer(query))
 
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_BOT_TOKEN"]).start()
