@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
@@ -10,20 +11,29 @@ import (
 	"notioncrawl/services/api/controller"
 	"notioncrawl/services/crawler"
 	"notioncrawl/services/state"
+	"time"
 )
 
 func Run(state *state.Manager, neo4jOptions crawler.Neo4jOptions, addr string, corsDomains string) {
-	neo4j, err := neo4j.NewDriverWithContext(neo4jOptions.Address, neo4j.BasicAuth(neo4jOptions.Username, neo4jOptions.Password, ""))
+	neo4jdriver, err := neo4j.NewDriverWithContext(neo4jOptions.Address, neo4j.BasicAuth(neo4jOptions.Username, neo4jOptions.Password, ""))
 	if err != nil {
 		panic(err)
 	}
 
-	ctrl := controller.New(neo4j)
+	ctrl := controller.New(neo4jdriver)
 
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: corsDomains,
+	}))
+
+	app.Use(cache.New(cache.Config{
+		Next: func(c *fiber.Ctx) bool {
+			return c.Query("noCache") == "true"
+		},
+		Expiration:   3 * time.Second,
+		CacheControl: true,
 	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -37,6 +47,9 @@ func Run(state *state.Manager, neo4jOptions crawler.Neo4jOptions, addr string, c
 		}
 		return c.Send(s)
 	})
+
+	app.Get("/pages", ctrl.GetPages)
+	app.Get("/pages/count", ctrl.GetPagesCount)
 
 	app.Post("/db/purge", ctrl.PurgeDb)
 

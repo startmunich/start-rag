@@ -66,8 +66,8 @@ export default function Dashboard({
                 variant: "default",
               },
               {
-                title: "Backup",
-                href: "/backup",
+                title: "Pages",
+                href: "/pages",
                 label: "20.000",
                 icon: Package,
                 variant: "ghost",

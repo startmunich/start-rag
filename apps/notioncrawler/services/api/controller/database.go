@@ -17,3 +17,38 @@ func (c *ApiController) PurgeDb(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusOK).SendString(fmt.Sprintf("Deleted %d nodes", len(result.Records)))
 	}
 }
+
+func (c *ApiController) GetPagesCount(ctx *fiber.Ctx) error {
+	result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
+		"MATCH (n:CrawledPage)\nRETURN count(n) as count",
+		map[string]any{}, neo4j.EagerResultTransformer)
+
+	if err != nil || len(result.Records) < 1 {
+		return ctx.JSON(map[string]any{
+			"count": 0,
+		})
+	}
+
+	return ctx.JSON(map[string]any{
+		"count": result.Records[0].Get("count"),
+	})
+}
+
+func (c *ApiController) GetPages(ctx *fiber.Ctx) error {
+	result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
+		"MATCH (n:CrawledPage)-[r]->(m:CrawledPage)\nRETURN n,r,m",
+		map[string]any{}, neo4j.EagerResultTransformer)
+
+	if err != nil {
+		return err
+	}
+
+	var items []interface{}
+	for _, record := range result.Records {
+		items = append(items, record.AsMap())
+	}
+
+	return ctx.JSON(map[string]any{
+		"items": items,
+	})
+}

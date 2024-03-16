@@ -1,6 +1,8 @@
 package controller
 
-import "github.com/neo4j/neo4j-go-driver/v5/neo4j"
+import (
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
+)
 
 type ApiController struct {
 	neo4j neo4j.DriverWithContext
