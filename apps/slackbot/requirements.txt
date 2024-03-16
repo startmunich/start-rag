@@ -1,8 +1,10 @@
 slack-bolt==1.18.1
 slack_sdk==3.27.1
 python-dotenv~=1.0.1
-langchain
+langchain == 0.1.12
 langchain_community
+langchainhub
+replicate == 0.24.0
 qdrant-client == 1.6.4
 dotenv
 os
