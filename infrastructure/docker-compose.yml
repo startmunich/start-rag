@@ -10,6 +10,9 @@ services:
       - target: 443
         published: 443
         mode: host
+      - target: 8080
+        published: 8080
+        mode: host
     deploy:
       placement:
         constraints:
@@ -18,19 +21,31 @@ services:
           - node.labels.traefik-public.traefik-public-certificates == true
     labels:
       - traefik.enable=true
-      - traefik.http.routers.traefik-public-http.rule=Host(`pt.start.khadim.io`)
-      - traefik.http.routers.traefik-public-http.entrypoints=http
-      - traefik.http.services.traefik-public.loadbalancer.server.port=8080
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.traefik-http.rule=Host(`traefik.start-rag.startmunich.de`)
+      - traefik.http.routers.traefik-http.entrypoints=web
+      - traefik.http.routers.traefik-http.middlewares=https-redirect
+      - traefik.http.routers.traefik-https.rule=Host(`traefik.start-rag.startmunich.de`)
+      - traefik.http.routers.traefik-https.entrypoints=webs
+      - traefik.http.routers.traefik-https.tls=true
+      - traefik.http.routers.traefik-https.service=traefik
+      - traefik.http.routers.traefik-https.tls.certresolver=mycaresolver
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ~/.certs/:/certs/
+      - letsencrypt:/letsencrypt
     command:
       - --providers.docker
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=webs
+      - --entrypoints.web.http.redirections.entrypoint.scheme=webs
+      - --entrypoints.webs.address=:443
+      - --entrypoints.webs.http.tls.certresolver=myresolver
+      - --certificatesresolvers.mycaresolver.acme.email=${EMAIL?Variable not set}
+      - --certificatesresolvers.mycaresolver.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.mycaresolver.acme.tlschallenge=true
       - --api
       - --api.dashboard=true
       - --api.insecure=true
@@ -87,27 +102,36 @@ services:
       CORS: https://monitor.start-rag.startmunich.de
       RERUN_DELAY_SEC: $RERUN_DELAY_SEC
     labels:
-      - traefik.http.services.traefik-public.loadbalancer.server.port=5001
-      - "traefik.http.routers.notioncrawler-http.entrypoints=web"
-      - "traefik.http.routers.notioncrawler-http.rule=Host(`crawler.start-rag.startmunich.de`)"
-      - "traefik.http.routers.notioncrawler-http.middlewares=notioncrawler-https"
-      - "traefik.http.middlewares.notioncrawler-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.notioncrawler.entrypoints=websecure"
-      - "traefik.http.routers.notioncrawler.rule=Host(`crawler.start-rag.startmunich.de`)"
-      - "traefik.http.routers.notioncrawler.tls=true"
+      - traefik.enable=true
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.notioncrawler-http.rule=Host(`crawler.start-rag.startmunich.de`)
+      - traefik.http.routers.notioncrawler-http.entrypoints=web
+      - traefik.http.routers.notioncrawler-http.middlewares=https-redirect
+      - traefik.http.routers.notioncrawler-https.rule=Host(`crawler.start-rag.startmunich.de`)
+      - traefik.http.routers.notioncrawler-https.entrypoints=webs
+      - traefik.http.routers.notioncrawler-https.tls=true
+      - traefik.http.routers.notioncrawler-https.service=notioncrawler
+      - traefik.http.routers.notioncrawler-https.tls.certresolver=mycaresolver
+      - traefik.http.services.notioncrawler.loadbalancer.server.port=5001
 
   dashboard:
     image: ghcr.io/startmunich/dashboard:latest
     expose:
       - "3000"
     labels:
-      - "traefik.http.routers.dashboard-http.entrypoints=web"
-      - "traefik.http.routers.dashboard-http.rule=Host(`monitor.start-rag.startmunich.de`)"
-      - "traefik.http.routers.dashboard-http.middlewares=dashboard-https"
-      - "traefik.http.middlewares.dashboard-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.rule=Host(`monitor.start-rag.startmunich.de`)"
-      - "traefik.http.routers.dashboard.tls=true"
+      - traefik.enable=true
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.dashboard-http.rule=Host(`monitor.start-rag.startmunich.de`)
+      - traefik.http.routers.dashboard-http.entrypoints=web
+      - traefik.http.routers.dashboard-http.middlewares=https-redirect
+      - traefik.http.routers.dashboard-https.rule=Host(`monitor.start-rag.startmunich.de`)
+      - traefik.http.routers.dashboard-https.entrypoints=webs
+      - traefik.http.routers.dashboard-https.tls=true
+      - traefik.http.routers.dashboard-https.service=dashboard
+      - traefik.http.routers.dashboard-https.tls.certresolver=mycaresolver
+      - traefik.http.services.dashboard.loadbalancer.server.port=3000
 
   vectordb_sync:
     hostname: vectordb_sync
@@ -143,4 +167,7 @@ services:
       SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
       REPLICATE_API_TOKEN: $REPLICATE_API_TOKEN
       LLM_MODEL: mistralai/mistral-7b-instruct-v0.2:79052a3adbba8116ebc6697dcba67ad0d58feff23e7aeb2f103fc9aa545f9269
-      
+
+volumes:
+  letsencrypt:
+    name: letsencrypt
