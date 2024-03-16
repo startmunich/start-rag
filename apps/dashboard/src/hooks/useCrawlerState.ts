@@ -22,13 +22,13 @@ export default function useCrawlerState(basePath: string): CrawlerState {
     });
 
     useEffect(() => {
-        const timeout = setTimeout(async () => {
+        const timeout = setInterval(async () => {
             const result = await fetch(`${basePath}/state`);
             const newState = await (result.json() as Promise<CrawlerState>);
             setState(newState);
         }, 3000);
 
-        return () => clearTimeout(timeout);
+        return () => clearInterval(timeout);
     }, [basePath]);
 
     return state;

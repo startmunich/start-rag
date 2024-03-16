@@ -37,11 +37,19 @@ export default function Crawler() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <h2 className="mb-2">Queue</h2>
-              <div className="flex justify-center gap-2 text-2xl px-3 py-2 bg-black/10 rounded-xl">
-                <div className="">{crawlerState.processed}</div>
-                <div className="">/</div>
-                <div className="">{crawlerState.inQueue}</div>
+              <div className="flex gap-2">
+                <div className="flex-grow">
+                  <h2 className="mb-1">Queue</h2>
+                  <div className="flex justify-center gap-2 text-2xl px-3 py-2 bg-black/10 rounded-xl">
+                    {crawlerState.inQueue}
+                  </div>
+                </div>
+                <div className="flex-grow">
+                  <h2 className="mb-1">Done</h2>
+                  <div className="flex justify-center gap-2 text-2xl px-3 py-2 bg-black/10 rounded-xl">
+                    {crawlerState.processed}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
