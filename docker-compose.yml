@@ -85,3 +85,23 @@ services:
     env_file:
       - .env
       - .env.local
+
+  slackbot:
+    hostname: slackbot
+    platform: "linux/amd64"
+    restart: always
+    build:
+      context: ./apps/slackbot
+      dockerfile: Dockerfile
+    depends_on:
+      - qdrant
+      - infinity
+    environment:
+      - QDRANT_URL: http://qdrant:6333
+      - QDRANT_COLLECTION_NAME: startgpt
+      - INFINITY_URL: http://infinity:7997
+      - INFINITY_MODEL: BAAI/bge-small-en
+    env_file:
+      - .env
+      - .env.local
+
