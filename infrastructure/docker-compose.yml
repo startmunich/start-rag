@@ -84,7 +84,7 @@ services:
       START_PAGE_ID: $START_PAGE_ID
       TOKEN_V2: $TOKEN_V2
       PORT: 5001
-      CORS: monitor.start-rag.startmunich.de
+      CORS: https://monitor.start-rag.startmunich.de
       RERUN_DELAY_SEC: $RERUN_DELAY_SEC
     labels:
       - traefik.http.services.traefik-public.loadbalancer.server.port=5001
