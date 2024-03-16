@@ -6,21 +6,27 @@ import unittest
 # test the get_answer function
 
 class TestAIFunctionalities(unittest.TestCase):
-    def test_get_answer(self):
 
-        start_munich_question = "What is the purpose of start munich?"
+    start_munich_question = "What is the purpose of start munich?"
 
+    def test_answer_none(self, start_munich_question=start_munich_question):
         # check if an answer is returned
-        self.assertIsNotNone(get_answer(start_munich_question))
+        answer = get_answer(start_munich_question)
+        print(f"LLM answer is: {answer}")
+        self.assertIsNotNone(answer)
 
+    def test_answer_type(self, start_munich_question=start_munich_question):
         # check if answer is a string
-        self.assertIsInstance(get_answer(start_munich_question), str)
+        answer = get_answer(start_munich_question)
+        print(f"LLM answer is: {answer}")
+        self.assertIsInstance(answer, str)
 
+
+    def test_answer_not_empty(self, start_munich_question=start_munich_question):
         # check if answer is not empty
-        self.assertNotEqual(get_answer(start_munich_question), "")
-
-        # print the answer
-        print(get_answer(start_munich_question))
+        answer = get_answer(start_munich_question)
+        print(f"LLM answer is: {answer}")
+        self.assertNotEqual(answer, "")
 
 if __name__ == "__main__":
 

@@ -22,6 +22,7 @@ qdrant_uri = os.environ["QDRANT_URL"]
 qdrant_collection_name = os.environ.get("QDRANT_COLLECTION_NAME")
 infinity_api_url = os.environ.get("INFINITY_URL")
 infinity_model = os.environ.get("INFINITY_MODEL")
+llm_model = os.environ.get("LLM_MODEL")
 
 # Create the Qdrant vector store
 qdrant_db = Qdrant(
@@ -40,19 +41,22 @@ retriever = qdrant_db.as_retriever(search_type = "mmr", search_kwargs={"k": 5, "
 llm = Replicate(
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
-    model="a16z-infra/llama13b-v2-chat:df7690f1994d94e96ad9d568eac121aecf50684a0b0963b25a41cc40061269e5",
-    model_kwargs={"temperature": 0.75, "max_length": 500, "top_p": 1}
+    model=llm_model,
+    model_kwargs={"temperature": 0.75, "max_length": 1500, "top_p": 0.2, "top_k": 7, "max_new_tokens": 200,
+        "min_new_tokens": 20, "repetition_penalty": 0.1},
+    verbose = False
 )
 
 # Create the prompt template
 prompt_template = """ [INST]
-It is December 2023. You are StartGPT, an assistant for question-answering tasks. Users reach out to you only via Slack. You serve a student led organization START Munich. 
-The context you get will be from our Notionpage. Use the following pieces of retrieved context to answer the question. 
-You decide what's more useful. If you don't know the answer, just say that you don't know.
+You are StartGPT, an assistant for question-answering tasks. Users reach out to you only via Slack. You serve a student led organization START Munich. 
+The context you get will be from our Notionpage. Use the following pieces of retrieved context to answer the question.
+Give a short summary of about 2-3 sentences about the context and then answer the question. Do not repeat the question in the answer.
+If you don't know the answer, just say that you don't know.
 Here's the question and the context:
 
 <Beginning of question>
-{query}
+{question}
 <End of question>
 
 <Beginning of context>
@@ -62,14 +66,15 @@ Here's the question and the context:
 """
 
 # Initialize prompt
-prompt_template = PromptTemplate(input_variables=["query", "context"], template=prompt_template)
+prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template)
 
 prompt = hub.pull("rlm/rag-prompt")
 
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     retriever=retriever,
-    chain_type_kwargs={"prompt": prompt},
+    chain_type_kwargs={"prompt": prompt_template},
+    verbose=False
 )
 
 # create function to invoke the retrievalQA
@@ -77,3 +82,6 @@ def get_answer(query: str) -> str:
     
     response = qa_chain.invoke({'query': query})
     return response["result"]
+
+
+
