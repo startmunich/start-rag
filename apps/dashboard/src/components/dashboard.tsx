@@ -1,5 +1,5 @@
 "use client";
-import { File, Inbox, Package, ScanSearch } from "lucide-react";
+import { Package, ScanSearch } from "lucide-react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   ResizableHandle,
@@ -12,6 +12,7 @@ import { Nav } from "./nav";
 import { cn } from "@/lib/utils";
 import { useContext } from "react";
 import AppStateContext from "@/context/appStateContext";
+import { usePathname } from "next/navigation";
 
 interface DashboardProps {
   selectableCrawler: {
@@ -29,6 +30,7 @@ export default function Dashboard({
   children,
 }: DashboardProps) {
   const { crawler, pageCount } = useContext(AppStateContext);
+  const pathname = usePathname();
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -39,7 +41,7 @@ export default function Dashboard({
             sizes,
           )}`;
         }}
-        className="h-full max-h-[800px] items-stretch"
+        className="h-[100vh] items-stretch"
       >
         <ResizablePanel
           defaultSize={defaultLayout[0]}
@@ -63,14 +65,14 @@ export default function Dashboard({
                 href: "/crawler",
                 label: crawler.isRunning ? "Running" : "Stopped",
                 icon: ScanSearch,
-                variant: "default",
+                isSelected: pathname === "/crawler",
               },
               {
-                title: "Pages",
-                href: "/pages",
+                title: "Workspace",
+                href: "/workspace",
                 label: pageCount.count.toString(),
                 icon: Package,
-                variant: "ghost",
+                isSelected: pathname === "/workspace",
               },
             ]}
           />

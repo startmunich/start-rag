@@ -10,11 +10,13 @@ export default function usePageCountState(basePath: string): PageCountState {
     });
 
     useEffect(() => {
-        const timeout = setInterval(async () => {
+        const updateState = async () => {
             const result = await fetch(`${basePath}/pages/count`);
             const newState = await (result.json() as Promise<PageCountState>);
             setState(newState);
-        }, 3000);
+        };
+        const timeout = setInterval(updateState, 3000);
+        updateState();
 
         return () => clearInterval(timeout);
     }, [basePath]);

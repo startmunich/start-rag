@@ -44,7 +44,7 @@ func (c *ApiController) GetPagesCount(ctx *fiber.Ctx) error {
 func (c *ApiController) GetPages(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Add("Cache-Time", "600")
 	result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
-		"MATCH (n:CrawledPage)-[r]->(m:CrawledPage)\nRETURN n,r,m",
+		"MATCH (n:CrawledPage)\nRETURN n{.page_id,.url,.child_pages}",
 		map[string]any{}, neo4j.EagerResultTransformer)
 
 	if err != nil {
@@ -53,10 +53,10 @@ func (c *ApiController) GetPages(ctx *fiber.Ctx) error {
 
 	var items []interface{}
 	for _, record := range result.Records {
-		items = append(items, record.AsMap())
+		items = append(items, record.AsMap()["n"])
 	}
 
 	return ctx.JSON(map[string]any{
-		"items": items,
+		"pages": items,
 	})
 }
