@@ -103,3 +103,20 @@ services:
       - .env
       - .env.local
 
+  webcrawler:
+    hostname: webcrawler
+    restart: always
+    ports:
+      - "8001:8001"
+    build:
+      context: ./apps/webcrawler
+      dockerfile: Dockerfile
+    depends_on:
+      - neo4j
+    environment:
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: redbull_wildberry
+    env_file:
+      - .env
+
