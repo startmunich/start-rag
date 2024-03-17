@@ -30,8 +30,14 @@ func (c *ApiController) GetPagesCount(ctx *fiber.Ctx) error {
 		})
 	}
 
+	count, exists := result.Records[0].Get("count")
+	if !exists {
+		return ctx.JSON(map[string]any{
+			"count": 0,
+		})
+	}
 	return ctx.JSON(map[string]any{
-		"count": result.Records[0].Get("count"),
+		"count": count,
 	})
 }
 
