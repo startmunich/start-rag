@@ -1,4 +1,4 @@
-from ai_functionalitites import get_answer
+from ai_fcts import get_answer
 import os
 import unittest
 

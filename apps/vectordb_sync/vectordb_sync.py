@@ -67,7 +67,7 @@ def process_queue():
     while True:
         if redis.llen('content_queue') != 0:
 
-            task = redis.rpop('content_queue')
+            task = json.loads(redis.rpop('content_queue'))
 
             id_to_process = task["id"]
 
@@ -162,8 +162,8 @@ def enqueue_ids():
     data = request.json
     if 'ids' in data:
         for id_to_enqueue in data['ids']:
-            redis.lpush("content_queue", {"id" : id_to_enqueue,
-                         "type" : "notion"})
+            sendeable_data = json.dumps({"id" : id_to_enqueue, "type" : "notion"})
+            redis.lpush("content_queue", sendeable_data)
             print(f"ID {id_to_enqueue} enqueued successfully")
         return jsonify({"message": "IDs enqueued successfully"}), 200
     else:
@@ -191,6 +191,7 @@ if __name__ == '__main__':
     while True:
         try:
             requests.get(url=f"{infinity_api_url}/ready")
+            neo4j_driver.verify_connectivity()
             break
         except:
             time.sleep(1)
