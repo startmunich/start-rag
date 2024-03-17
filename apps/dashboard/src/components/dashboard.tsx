@@ -28,7 +28,7 @@ export default function Dashboard({
   defaultLayout,
   children,
 }: DashboardProps) {
-  const { crawler } = useContext(AppStateContext);
+  const { crawler, pageCount } = useContext(AppStateContext);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -68,7 +68,7 @@ export default function Dashboard({
               {
                 title: "Pages",
                 href: "/pages",
-                label: "20.000",
+                label: pageCount.count.toString(),
                 icon: Package,
                 variant: "ghost",
               },
