@@ -16,11 +16,12 @@ from qdrant_client.http.models import PointStruct, FilterSelector, Filter, Field
 import threading
 import requests
 import json
-import queue
 import time
 import os
 import uuid
 import numpy as np
+from redis import Redis
+from vectordb_sync_fcts import notion_to_qdrant, web_to_qdrant, slack_to_qdrant
 
 
 app = Flask(__name__)
@@ -41,23 +42,8 @@ qdrant_client = QdrantClient(url=qdrant_uri,port=6333)
 infinity_api_url = os.environ.get("INFINITY_URL")
 infinity_model = os.environ.get("INFINITY_MODEL")
 
-# langchain text splitter
-
-text_splitter = langchain.text_splitter.RecursiveCharacterTextSplitter(
-                    chunk_size=1000,
-                    chunk_overlap=100,
-                    length_function=len)
-                
-headers_to_split_on = [
-    ("#", "Header 1"),
-    ("##", "Header 2")
-]
-
-markdown_splitter = langchain.text_splitter.MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on,
-                                                                        strip_headers=False)
-
-# Queue for storing IDs to be processed
-id_queue = queue.Queue()
+# Redis instance for storing IDs to be processed
+redis = Redis(host='redis', port=6379, db=0)
 
 # model = SentenceTransformer(infinity_model)
 
@@ -65,82 +51,26 @@ id_queue = queue.Queue()
 def process_queue():
     app.logger.info(f"start process_queue")
     while True:
-        if not id_queue.empty():
-            app.logger.info(f"id_queue not empty")
-            id_to_process = id_queue.get()
-            app.logger.info(f"processing id {id_to_process}")
-            with neo4j_driver.session() as session:
-                result = session.run(
-                    "MATCH (n:CrawledPage {page_id: $id}) RETURN n.content AS content",
-                    id=id_to_process,
-                )
-                app.logger.info('result of session run')
-                record = result.single()
-                app.logger.info(record)
-                record_content = record.get("content")
-                content = json.loads(record_content)
+        if redis.llen('content_queue') != 0:
 
-                complete_content = []
+            task = json.loads(redis.rpop('content_queue'))
 
-                for element in content:
-                    # check if content_type is markdown or database
-                    if element['content_type'] == 'markdown':
-                        # apply markdown_splitter and add to complete_content
-                        markdown_documents = markdown_splitter.split_text(element['content'])
-                        markdown_strings = [document.page_content for document in markdown_documents]
-                        complete_content += markdown_strings
-                    elif element['content_type'] == 'database':
-                        # create temp csv file and apply csv_loader and add to complete_content
-                        with open('temp.csv', 'w') as file:
-                            file.write(element['content'])
-                        csv_loader = CSVLoader("temp.csv")
-                        database_elements = [document.page_content for document in csv_loader.load()]
-                        database_content = "\n\n".join(database_elements)
-                        complete_content += text_splitter.split_text(database_content)
-                    else:
-                        continue
+            id_to_process = task["id"]
 
+            if task["type"] == "notion":
+            
+                notion_to_qdrant(id_to_process)
+
+            if task["type"] == "web":
+                
+                web_to_qdrant(id_to_process)
+
+            if task["type"] == "slack":
+                
+                slack_to_qdrant(id_to_process)
+            
                 
                 
-
-                # lower the case of the chunks in chunks
-                chunks = [chunk.lower() for chunk in complete_content]
-
-
-                # Embed the chunks using Infinity
-
-                
-                chunks_embedded = [requests.post(url=f"{infinity_api_url}/embeddings", json={"model": "bge-small-en-v1.5", "input":[chunk]}).json()["data"][0]["embedding"] for chunk in chunks]
-                print("embeddings created successful")
-                
-                
-
-                # delete all points with the same id_to_process
-                qdrant_client.delete(collection_name=qdrant_collection_name,     
-                                     points_selector=FilterSelector(
-                                        filter=Filter(
-                                            must=[
-                                                FieldCondition(
-                                                    key="page_id",
-                                                    match=MatchValue(value=id_to_process),
-                                                ),
-                                            ],
-                                        )
-                                    ),
-                                    )
-
-                # Insert the preprocessed chunk into Qdrant
-                
-                points_to_update = [PointStruct(id=str(uuid.uuid4()), 
-                                                vector=chunk_embedding,
-                                                payload={"content": chunk, "page_id": id_to_process}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
-                
-                app.logger.info(f"points_to_update: {points_to_update}")
-
-                qdrant_client.upsert(
-                    collection_name=qdrant_collection_name,
-                    points= points_to_update
-                    )
                 
         else:
             # wait 10 seconds before checking the queue again
@@ -149,19 +79,28 @@ def process_queue():
 
 
 
-@app.route('/enqueue', methods=['POST'])
+@app.route('/enqueue', methods=['POST']) # rename to enqueue_notion together with notion_Crwaler
 def enqueue_ids():
     app.logger.info('json payload')
     app.logger.info(request.json)
     data = request.json
     if 'ids' in data:
         for id_to_enqueue in data['ids']:
-            id_queue.put(id_to_enqueue)
+            sendeable_data = json.dumps({"id" : id_to_enqueue, "type" : "notion"})
+            redis.lpush("content_queue", sendeable_data)
             print(f"ID {id_to_enqueue} enqueued successfully")
         return jsonify({"message": "IDs enqueued successfully"}), 200
     else:
         print("No IDs provided")
         return jsonify({"error": "No IDs provided"}), 400
+    
+@app.route('/enqueue_web', methods=['POST'])
+def enqueue_web(): # make data to dict with id and type before pushing to redis list
+    pass
+
+@app.route('/enqueue_slack', methods=['POST'])
+def enqueue_slack(): # make data to dict with id and type before pushing to redis list
+    pass
     
 @app.route('/ready', methods=['GET'])
 def ready():
@@ -184,6 +123,7 @@ if __name__ == '__main__':
     while True:
         try:
             requests.get(url=f"{infinity_api_url}/ready")
+            neo4j_driver.verify_connectivity()
             break
         except:
             time.sleep(1)

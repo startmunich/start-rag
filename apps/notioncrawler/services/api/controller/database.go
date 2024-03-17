@@ -19,6 +19,7 @@ func (c *ApiController) PurgeDb(ctx *fiber.Ctx) error {
 }
 
 func (c *ApiController) GetPagesCount(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Add("Cache-Time", "60")
 	result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
 		"MATCH (n:CrawledPage)\nRETURN count(n) as count",
 		map[string]any{}, neo4j.EagerResultTransformer)
@@ -35,6 +36,7 @@ func (c *ApiController) GetPagesCount(ctx *fiber.Ctx) error {
 }
 
 func (c *ApiController) GetPages(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Add("Cache-Time", "600")
 	result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
 		"MATCH (n:CrawledPage)-[r]->(m:CrawledPage)\nRETURN n,r,m",
 		map[string]any{}, neo4j.EagerResultTransformer)
