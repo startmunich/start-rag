@@ -21,7 +21,7 @@ import os
 import uuid
 import numpy as np
 from redis import Redis
-from vectordb_sync_fcts import notion_to_qdrant
+from vectordb_sync_fcts import notion_to_qdrant, web_to_qdrant, slack_to_qdrant
 
 
 app = Flask(__name__)
@@ -60,6 +60,14 @@ def process_queue():
             if task["type"] == "notion":
             
                 notion_to_qdrant(id_to_process)
+
+            if task["type"] == "web":
+                
+                web_to_qdrant(id_to_process)
+
+            if task["type"] == "slack":
+                
+                slack_to_qdrant(id_to_process)
             
                 
                 
@@ -71,7 +79,7 @@ def process_queue():
 
 
 
-@app.route('/enqueue', methods=['POST'])
+@app.route('/enqueue', methods=['POST']) # rename to enqueue_notion together with notion_Crwaler
 def enqueue_ids():
     app.logger.info('json payload')
     app.logger.info(request.json)
@@ -85,6 +93,14 @@ def enqueue_ids():
     else:
         print("No IDs provided")
         return jsonify({"error": "No IDs provided"}), 400
+    
+@app.route('/enqueue_web', methods=['POST'])
+def enqueue_web(): # make data to dict with id and type before pushing to redis list
+    pass
+
+@app.route('/enqueue_slack', methods=['POST'])
+def enqueue_slack(): # make data to dict with id and type before pushing to redis list
+    pass
     
 @app.route('/ready', methods=['GET'])
 def ready():

@@ -112,7 +112,7 @@ def notion_to_qdrant(id_to_process) -> None:
         
         points_to_update = [PointStruct(id=str(uuid.uuid4()), 
                                         vector=chunk_embedding,
-                                        payload={"content": chunk, "page_id": id_to_process}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
+                                        payload={"content": chunk, "page_id": id_to_process, "type": "notion"}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
         
         
 
@@ -120,3 +120,20 @@ def notion_to_qdrant(id_to_process) -> None:
             collection_name=qdrant_collection_name,
             points= points_to_update
             )
+        
+def web_to_qdrant(id_to_process):
+    ## TODO
+    # 1. get content from neo4j
+    # 2. preprocess content as far as necessary
+    # 3. embedd content with infinity
+    # 4. insert into qdrant
+    pass
+
+def slack_to_qdrant(id_to_process):
+    ## TODO
+    # 1. get content from neo4j
+    # 2. preprocess content as far as necessary
+    # 3. see if concatenation of some messages is necessary depending on their length
+    # 4. embedd content with infinity
+    # 5. insert into qdrant
+    pass
