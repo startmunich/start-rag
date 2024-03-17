@@ -19,6 +19,9 @@ services:
     hostname: redis
     ports:
       - "6379:6379"
+    build:
+      context: ./apps/redis
+      dockerfile: Dockerfile
 
   neo4j:
     hostname: neo4j
