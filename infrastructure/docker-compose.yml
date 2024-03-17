@@ -82,6 +82,12 @@ services:
       - server.default_listen_address=0.0.0.0
       - initial.dbms.default_database=neo4j
       - NEO4J_AUTH=neo4j/redbull_wildberry
+  
+  redis:
+    image: ghcr.io/startmunich/redis:latest
+    hostname: redis
+    ports:
+      - "6379:6379"
 
   notioncrawler:
     image: ghcr.io/startmunich/notioncrawler:latest
@@ -142,6 +148,8 @@ services:
     depends_on:
       - neo4j
       - qdrant
+      - infinity
+      - redis
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j

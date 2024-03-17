@@ -3,6 +3,7 @@
 [![NotionCrawler Build](https://github.com/startmunich/start-rag/actions/workflows/notioncrawler-build.yaml/badge.svg)](https://github.com/startmunich/start-rag/actions/workflows/notioncrawler-build.yaml)
 [![VectordbSync Build](https://github.com/startmunich/start-rag/actions/workflows/vectordb_sync-build.yaml/badge.svg)](https://github.com/startmunich/start-rag/actions/workflows/vectordb_sync-build.yaml)
 [![Slackbot Build](https://github.com/startmunich/start-rag/actions/workflows/slackbot-build.yaml/badge.svg)](https://github.com/startmunich/start-rag/actions/workflows/slackbot-build.yaml)
+[![Redis Build](https://github.com/startmunich/start-rag/actions/workflows/redis-build.yaml/badge.svg)](https://github.com/startmunich/start-rag/actions/workflows/redis-build.yaml)
 
 AI assistant for START Munich members
 ## Miro Page
