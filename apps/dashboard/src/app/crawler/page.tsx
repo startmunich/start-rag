@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import CrawlerContext from "@/context/crawlerContext";
+import CrawlerContext from "@/context/appStateContext";
 import { cn } from "@/lib/utils";
 import { PlayCircle, StopCircle } from "lucide-react";
 import { useContext } from "react";

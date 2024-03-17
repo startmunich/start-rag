@@ -2,9 +2,9 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Dashboard from "@/components/dashboard";
-import useCrawlerState from "@/hooks/useCrawlerState";
-import CrawlerContext from "@/context/crawlerContext";
 import { NotionLogoIcon } from "@radix-ui/react-icons";
+import AppStateContext from "@/context/appStateContext";
+import useAppState from "@/hooks/useAppState";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,18 +23,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const crawlerState = useCrawlerState(process.env.NEXT_PUBLIC_CRAWLER_API_BASE_PATH!);
+  const appState = useAppState(process.env.NEXT_PUBLIC_CRAWLER_API_BASE_PATH!);
   return (
     <html lang="en">
       <body className={inter.className}>
-        <CrawlerContext.Provider value={crawlerState}>
+        <AppStateContext.Provider value={appState}>
           <Dashboard
-            crawler={crawler}
+            selectableCrawler={crawler}
             defaultLayout={[265, 440, 655]}
           >
             {children}
           </Dashboard>
-        </CrawlerContext.Provider>
+        </AppStateContext.Provider>
       </body>
     </html>
   );

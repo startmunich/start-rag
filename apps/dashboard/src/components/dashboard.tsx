@@ -11,10 +11,10 @@ import { Separator } from "@radix-ui/react-select";
 import { Nav } from "./nav";
 import { cn } from "@/lib/utils";
 import { useContext } from "react";
-import CrawlerContext from "@/context/crawlerContext";
+import AppStateContext from "@/context/appStateContext";
 
 interface DashboardProps {
-  crawler: {
+  selectableCrawler: {
     label: string;
     name: string;
     icon: React.ReactNode;
@@ -24,11 +24,11 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  crawler,
+  selectableCrawler,
   defaultLayout,
   children,
 }: DashboardProps) {
-  const crawlerState = useContext(CrawlerContext);
+  const { crawler } = useContext(AppStateContext);
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -52,7 +52,7 @@ export default function Dashboard({
               "flex h-[52px] items-center justify-center px-2",
             )}
           >
-            <CrawlerSwitcher isCollapsed={false} crawler={crawler} />
+            <CrawlerSwitcher isCollapsed={false} crawler={selectableCrawler} />
           </div>
           <Separator />
           <Nav
@@ -61,7 +61,7 @@ export default function Dashboard({
               {
                 title: "Crawler",
                 href: "/crawler",
-                label: crawlerState.isRunning ? "Running" : "Stopped",
+                label: crawler.isRunning ? "Running" : "Stopped",
                 icon: ScanSearch,
                 variant: "default",
               },
