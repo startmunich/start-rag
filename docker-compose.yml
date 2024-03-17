@@ -10,9 +10,18 @@ services:
   infinity:
     image: "michaelf34/infinity"
     hostname: infinity
-    command: --model-name-or-path BAAI/bge-small-en
+    command: --model-name-or-path BAAI/bge-small-en-v1.5
     ports:
       - "7997:7997"
+
+  redis:
+    image: "redis"
+    hostname: redis
+    ports:
+      - "6379:6379"
+    build:
+      context: ./apps/redis
+      dockerfile: Dockerfile
 
   neo4j:
     hostname: neo4j
@@ -73,6 +82,7 @@ services:
       - neo4j
       - qdrant
       - infinity
+      - redis
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j
@@ -80,7 +90,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997
-      INFINITY_MODEL: BAAI/bge-small-en
+      INFINITY_MODEL: bge-small-en-v1.5
     env_file:
       - .env
       - .env.local
@@ -98,7 +108,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997
-      INFINITY_MODEL: BAAI/bge-small-en
+      INFINITY_MODEL: BAAI/bge-small-en-v1.5
     env_file:
       - .env
       - .env.local
