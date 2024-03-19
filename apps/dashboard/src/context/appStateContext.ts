@@ -12,6 +12,7 @@ const AppStateContext = createContext<AppState>({
         isRunning: false,
         inQueue: 0,
         processed: 0,
+        cacheMisses: 0,
         lastRunDuration: 0,
         lastRunStartedAt: 0,
         lastRunEndedAt: 0,
