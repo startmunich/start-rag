@@ -127,17 +127,20 @@ func (s *Crawler) shouldForceUpdate(pageId string) bool {
 	return false
 }
 
-func (s *Crawler) CrawlNext() error {
+func (s *Crawler) CrawlNext() (*CrawlNextResult, error) {
+	result := &CrawlNextResult{
+		CacheMiss: false,
+	}
 	queueEntry, err := s.dequeue()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.Println(fmt.Sprintf("[info] Id: %s", queueEntry.PageID))
 
 	page, err := s.metaCrawler.CrawlMeta(queueEntry.PageID, queueEntry.ParentID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Println(fmt.Sprintf("[info] Url: %s", page.Url))
 
@@ -145,15 +148,16 @@ func (s *Crawler) CrawlNext() error {
 	cachedPage := GetCachedPage(s.db, queueEntry.PageID)
 	if cachedPage == nil || cachedPage.Hash != page.Hash || s.shouldForceUpdate(queueEntry.PageID) {
 		log.Println("[info] Cache MISS")
+		result.CacheMiss = true
 
 		content, err := s.contentCrawler.CrawlContent(page.PageID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		page.CrawlResult = content
 
 		if err := UpdateCache(s.db, page, s.id); err != nil {
-			return err
+			return nil, err
 		}
 
 		log.Println("[info] Enqueue for vector db")
@@ -180,7 +184,7 @@ func (s *Crawler) CrawlNext() error {
 		})
 	}
 
-	return nil
+	return result, nil
 }
 
 func (s *Crawler) PerformFullBaseExport() error {

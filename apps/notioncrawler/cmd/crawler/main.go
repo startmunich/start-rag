@@ -32,8 +32,6 @@ func mustParseInt64(num string) uint64 {
 }
 
 func main() {
-	start := time.Now()
-
 	tokenv2 := mustEnv("TOKEN_V2")
 	spaceId := mustEnv("SPACE_ID")
 	startPageId := mustEnv("START_PAGE_ID")
@@ -85,6 +83,7 @@ func main() {
 	workspaceExporter := unofficial_workspace_exporter.New(notionClient)
 
 	for {
+		start := time.Now()
 		log.Printf("Starting Notioncrawler")
 		stateMgr.UpdateIsRunning(true).UpdateLastRunStartedAt(time.Now().UTC().UnixMilli())
 		crawlerInstance := crawler.New(
@@ -102,12 +101,15 @@ func main() {
 		)
 
 		processed := uint64(0)
+		cacheMisses := uint64(0)
 		for crawlerInstance.HasNext() {
 			log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
-			stateMgr.UpdateInQueue(uint64(crawlerInstance.QueueSize())).UpdateProcessed(processed)
-			err := crawlerInstance.CrawlNext()
-			if err != nil {
+			stateMgr.UpdateInQueue(uint64(crawlerInstance.QueueSize())).UpdateProcessed(processed).UpdateCacheMisses(cacheMisses)
+
+			if res, err := crawlerInstance.CrawlNext(); err != nil {
 				log.Println(err.Error())
+			} else if res.CacheMiss {
+				cacheMisses += 1
 			}
 			processed += 1
 		}
@@ -121,7 +123,9 @@ func main() {
 			time.Now().UTC().UnixMilli(),
 		).UpdateNextRunAt(
 			time.Now().UTC().UnixMilli() + reRunDelayDuration.Milliseconds(),
-		)
+		).UpdateInQueue(
+			0,
+		).UpdateProcessed(processed).UpdateCacheMisses(cacheMisses)
 		time.Sleep(reRunDelayDuration)
 	}
 }

@@ -34,6 +34,10 @@ type CrawlContent struct {
 	Content  string           `json:"content"`
 }
 
+type CrawlNextResult struct {
+	CacheMiss bool
+}
+
 type CrawlQueueEntry struct {
 	PageID   string
 	ParentID string

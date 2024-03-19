@@ -1,9 +1,10 @@
 package state
 
 type State struct {
-	IsRunning bool   `json:"isRunning"`
-	InQueue   uint64 `json:"inQueue"`
-	Processed uint64 `json:"processed"`
+	IsRunning   bool   `json:"isRunning"`
+	InQueue     uint64 `json:"inQueue"`
+	Processed   uint64 `json:"processed"`
+	CacheMisses uint64 `json:"cacheMisses"`
 
 	LastRunDuration  uint64 `json:"lastRunDuration"`
 	LastRunStartedAt int64  `json:"lastRunStartedAt"`
