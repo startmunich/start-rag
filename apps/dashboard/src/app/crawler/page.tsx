@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import CrawlerContext from "@/context/appStateContext";
 import { cn } from "@/lib/utils";
-import { PlayCircle, StopCircle } from "lucide-react";
+import { Flame, PlayCircle, StopCircle } from "lucide-react";
 import { useContext } from "react";
 import React  from 'react';
 import Moment from 'react-moment';
@@ -50,6 +50,10 @@ export default function Crawler() {
                     {crawler.processed}
                   </div>
                 </div>
+              </div>
+              <div className="text-sm mt-4 bg-transparent flex items-center text-blue-600 font-bold">
+                <Flame className="w-5 h-5 inline-block mr-1" />
+                {crawler.cacheMisses} Updated Pages
               </div>
             </CardContent>
           </Card>
