@@ -86,8 +86,8 @@ services:
   redis:
     image: ghcr.io/startmunich/redis:latest
     hostname: redis
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
 
   notioncrawler:
     image: ghcr.io/startmunich/notioncrawler:latest
