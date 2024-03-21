@@ -1,7 +1,6 @@
 import os
 import time
 import json
-from datetime import datetime
 from slack import WebClient
 from neo4j import GraphDatabase
 import logging
