@@ -78,6 +78,7 @@ services:
       context: ./apps/slackcrawler
       dockerfile: Dockerfile
     depends_on:
+      - vectordb_sync
       - neo4j
       - redis
     environment:

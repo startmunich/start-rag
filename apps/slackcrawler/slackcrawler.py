@@ -19,7 +19,7 @@ SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 # load channels from json file and store them in SLACK_CHANNELS
 SLACK_CHANNELS = []
 with open('relevant_channels.json') as f:
-    SLACK_CHANNELS = list(dict(json.loads(f)).keys())
+    SLACK_CHANNELS = list(dict(json.load(f)).keys())
 
 slack_client = WebClient(token=SLACK_BOT_TOKEN)
 
@@ -41,11 +41,13 @@ def crawl_and_store_data():
         for message in message_history:
             timestamp = message['ts']
             content = message['text']
-            message_id = uuid.UUID(channel_id+timestamp)
-            message_ids.append(message_id)
+            
+            
+            message_id = uuid.uuid4()
+            message_ids.append(str(message_id))
 
             with neo4j_driver.session() as session:
-                logger.info(f"adding message: " + message_id + " to neo4j")
+                logger.info(f"adding message: " + str(message_id) + " to neo4j")
                 session.run(
                     # merges the message with current message_id
                     # cf. notioncrawler/crawler/cache.go
@@ -54,11 +56,11 @@ def crawl_and_store_data():
                     "ON CREATE SET n.crawlerId=$crawler_id, n.content=$content, n.message_id =$message_id\n" +
                     # if such a node exists update the attributes that exists in page
                     "ON MATCH SET n.crawlerId=$crawler_id, n.content=$content, n.message_id =$message_id\n",
-                    message_id=message_id,
+                    message_id=str(message_id),
                     crawler_id="Slackcrawler",
                     content=content
                 )
-                logger.info(f"adding message: " + message_id + " added to neo4j")
+                logger.info(f"adding message: " + str(message_id) + " added to neo4j")
 
             # send post request to '/enqueue_slack' endpoint with message_id
             # to add the message to the queue
@@ -82,6 +84,7 @@ if __name__ == "__main__":
     while True:
         try:
             neo4j_driver.verify_connectivity()
+            requests.get(url="http://vectordb_sync:5000/ready")
             break
         except:
             time.sleep(1)

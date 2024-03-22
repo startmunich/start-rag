@@ -11,4 +11,4 @@ COPY . /app
 RUN pip install -r requirements.txt
 
 # Run when the container launches
-CMD ["python", "main.py"]
+CMD ["python", "slackcrawler.py"]
