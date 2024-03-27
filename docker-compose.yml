@@ -70,6 +70,25 @@ services:
     ports:
       - "3000:3000"
 
+  slackcrawler:
+    hostname: slackcrawler
+    platform: "linux/amd64"
+    restart: always
+    build:
+      context: ./apps/slackcrawler
+      dockerfile: Dockerfile
+    depends_on:
+      - vectordb_sync
+      - neo4j
+      - redis
+    environment:
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: redbull_wildberry
+    env_file:
+      - .env
+      - .env.local
+
   vectordb_sync:
     hostname: vectordb_sync
     ports:
