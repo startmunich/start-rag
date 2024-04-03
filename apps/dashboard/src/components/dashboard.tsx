@@ -1,5 +1,5 @@
 "use client";
-import { Package, ScanSearch } from "lucide-react";
+import { Bolt, Package, ScanSearch } from "lucide-react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   ResizableHandle,
@@ -49,11 +49,7 @@ export default function Dashboard({
           minSize={15}
           maxSize={20}
         >
-          <div
-            className={cn(
-              "flex h-[52px] items-center justify-center px-2",
-            )}
-          >
+          <div className={cn("flex h-[52px] items-center justify-center px-2")}>
             <CrawlerSwitcher isCollapsed={false} crawler={selectableCrawler} />
           </div>
           <Separator />
@@ -74,12 +70,19 @@ export default function Dashboard({
                 icon: Package,
                 isSelected: pathname === "/workspace",
               },
+              {
+                title: "Manage",
+                href: "/manage",
+                label: "",
+                icon: Bolt,
+                isSelected: pathname === "/manage",
+              },
             ]}
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-            {children}
+          {children}
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
