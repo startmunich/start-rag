@@ -44,7 +44,7 @@ llm = Replicate(
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
     model=llm_model,
-    model_kwargs={"temperature": 0.75, "max_length": 1500, "top_p": 0.2, "top_k": 7, "max_new_tokens": 200,
+    model_kwargs={"temperature": 0.6, "max_length": 1500, "top_p": 0.9, "top_k": 50, "max_new_tokens": 200,
         "min_new_tokens": 20, "repetition_penalty": 0.1},
     verbose = False
 )
@@ -70,7 +70,7 @@ Here's the question and the context:
 """
 
 # Initialize prompt
-prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template, partial_variables=["date"])
+prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template, partial_variables={"date": date})
 
 prompt = hub.pull("rlm/rag-prompt")
 
