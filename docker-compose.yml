@@ -136,7 +136,7 @@ services:
       - .env.local
 
   meilisearch:
-    container_name: meilisearch
+    hostname: meilisearch
     image: getmeili/meilisearch:v0.25.2
     environment:
       - MEILI_MASTER_KEY=redbull_blueberry
