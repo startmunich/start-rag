@@ -96,7 +96,18 @@ def enqueue_ids():
     
 @app.route('/enqueue_web', methods=['POST'])
 def enqueue_web(): # make data to dict with id and type before pushing to redis list
-    pass
+    app.logger.info('json payload')
+    app.logger.info(request.json)
+    data = request.json
+    if 'ids' in data:
+        for id_to_enqueue in data['ids']:
+            sendeable_data = json.dumps({"id": id_to_enqueue, "type": "web"})
+            redis.lpush("content_queue", sendeable_data)
+            print(f"ID {id_to_enqueue} enqueued successfully")
+        return jsonify({"message": "IDs for web enqueued successfully"}), 200
+    else:
+        print("No IDs provided")
+        return jsonify({"error": "No IDs for web provided"}), 400
 
 @app.route('/enqueue_slack', methods=['POST'])
 def enqueue_slack(): # make data to dict with id and type before pushing to redis list
