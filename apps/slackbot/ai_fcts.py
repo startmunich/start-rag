@@ -70,7 +70,7 @@ Here's the question and the context:
 """
 
 # Initialize prompt
-prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template, partial_variables={"date": date})
+prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template, partial_variables={"date": date.today()})
 
 prompt = hub.pull("rlm/rag-prompt")
 
