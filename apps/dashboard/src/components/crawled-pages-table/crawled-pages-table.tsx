@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import debounce from "lodash.debounce";
 import {
   Table,
   TableBody,
@@ -17,57 +18,99 @@ import {
 import "reactflow/dist/style.css";
 import { Input } from "../ui/input";
 
-export interface CrawledPage {
-  child_pages: string;
-  page_id: string;
+export interface SearchResult {
+  hits: SearchHit[];
+  limit: number;
+  processingTimeMs: number;
+  query: string;
+}
+
+export interface SearchHit {
+  _formatted: FormattedData;
+  content: string;
+  id: string;
   url: string;
 }
 
-const columns: ColumnDef<CrawledPage>[] = [
+export interface FormattedData {
+  content: string;
+  id: string;
+  url: string;
+}
+
+const columns: ColumnDef<SearchHit>[] = [
   {
-    accessorKey: "page_id",
-    header: "Page ID",
-    cell: ({ row }) => <div>{row.getValue("page_id")}</div>,
+    accessorKey: "id",
+    header: "ID",
+    cell: ({ row }) => (
+      <div className="w-12 overflow-hidden text-ellipsis [&>em]:bg-yellow-300">
+        {row.getValue("id")}
+      </div>
+    ),
   },
   {
-    accessorKey: "child_pages",
-    header: "Child Pages",
-    cell: ({ row }) => <div>{row.getValue("child_pages")}</div>,
+    accessorKey: "content",
+    header: "Content",
+    cell: ({ row }) => (
+      <div
+        className="[&>em]:bg-yellow-300"
+        dangerouslySetInnerHTML={{ __html: row.getValue("content") }}
+      ></div>
+    ),
   },
   {
     accessorKey: "url",
     header: "Url",
-    cell: ({ row }) => <div>{row.getValue("url")}</div>,
+    cell: ({ row }) => (
+      <a
+        target="_blank"
+        href={row.getValue("url")}
+        className="[&>em]:bg-yellow-300"
+      >
+        {row.getValue("url")}
+      </a>
+    ),
   },
 ];
 
+const emptyResult: SearchResult = {
+  hits: [],
+  limit: 0,
+  processingTimeMs: 0,
+  query: "",
+};
+
 function CrawledPagesTable() {
   const [query, setQuery] = useState("");
-  const [crawledPages, setCrawledPages] = useState<CrawledPage[]>([]);
-
-  const updateCrawledPages = async () => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_CRAWLER_API_BASE_PATH!}/pages`,
-    );
-    const data = await res.json();
-    setCrawledPages(data.pages);
-  };
-
-  useEffect(() => {
-    updateCrawledPages();
-  }, []);
-
-  const filteredPages = crawledPages.filter((page) =>
-    [page.page_id, page.url].some((field) =>
-      field.toLowerCase().includes(query.toLowerCase()),
-    ),
-  );
+  const [searchResult, setSearchResult] = useState<SearchResult>(emptyResult);
 
   const table = useReactTable({
-    data: filteredPages,
+    data: searchResult.hits,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const updateCrawledPages = useCallback(
+    debounce(async (q: string) => {
+      setSearchResult(emptyResult);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_CRAWLER_API_BASE_PATH!}/search?q=${encodeURIComponent(q)}`,
+      );
+      const data = await res.json();
+      data.hits = data.hits.map((hit: any) => ({
+        content: hit._formatted.content,
+        id: hit._formatted.id,
+        url: hit._formatted.url,
+      }));
+      setSearchResult(data);
+    }, 500),
+    [],
+  );
+
+  useEffect(() => {
+    if (query == "") return;
+    updateCrawledPages(query);
+  }, [query, updateCrawledPages]);
 
   return (
     <div className="flex flex-col gap-2 items-end">
@@ -78,8 +121,11 @@ function CrawledPagesTable() {
         placeholder="Search"
         className="w-48"
       />
-      <div className="rounded-md border w-full">
-        <Table>
+      <div className="text-sm text-gray-500">
+        {searchResult.hits.length} results in {searchResult.processingTimeMs}ms
+      </div>
+      <div className="rounded-md border w-full max-h-[70vh] overflow-y-auto">
+        <Table className="w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -98,7 +144,7 @@ function CrawledPagesTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="w-full">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -117,12 +163,11 @@ function CrawledPagesTable() {
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
+                <TableCell colSpan={0} className="h-24 text-center"></TableCell>
+                <TableCell colSpan={0} className="h-24 text-center">
+                  Search something :)
                 </TableCell>
+                <TableCell colSpan={0} className="h-24 text-center"></TableCell>
               </TableRow>
             )}
           </TableBody>

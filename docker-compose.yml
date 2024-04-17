@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 
 services:
   qdrant:
@@ -28,8 +28,8 @@ services:
     restart: always
     image: neo4j:5.17
     volumes:
-      - '$HOME/startgpt/neo4j/data:/data'
-      - '$HOME/startgpt/neo4j/conf/:/conf/'
+      - "$HOME/startgpt/neo4j/data:/data"
+      - "$HOME/startgpt/neo4j/conf/:/conf/"
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -57,6 +57,8 @@ services:
       NEO4J_USER: neo4j
       NEO4J_PASS: redbull_wildberry
       VECTOR_QUEUE_URL: http://vectordb_sync:5000
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_API_TOKEN: redbull_blueberry
       CORS: "*"
       PORT: 8000
     env_file:
@@ -133,3 +135,17 @@ services:
       - .env
       - .env.local
 
+  meilisearch:
+    container_name: meilisearch
+    image: getmeili/meilisearch:v0.25.2
+    environment:
+      - MEILI_MASTER_KEY=redbull_blueberry
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_ENV=production
+      - MEILI_DB_PATH=data.ms
+    ports:
+      - 7700:7700
+    volumes:
+      - ./data.ms:/data.ms
+      - "$HOME/startgpt/meilisearch/data.ms:/data.ms"
+    restart: unless-stopped

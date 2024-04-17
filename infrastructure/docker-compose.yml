@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 
 services:
   traefik:
@@ -69,8 +69,8 @@ services:
     restart: always
     image: neo4j:5.17
     volumes:
-      - '$HOME/startgpt/neo4j/data:/data'
-      - '$HOME/startgpt/neo4j/conf/:/conf/'
+      - "$HOME/startgpt/neo4j/data:/data"
+      - "$HOME/startgpt/neo4j/conf/:/conf/"
     expose:
       - "7474"
       - "7687"
@@ -82,7 +82,7 @@ services:
       - server.default_listen_address=0.0.0.0
       - initial.dbms.default_database=neo4j
       - NEO4J_AUTH=neo4j/redbull_wildberry
-  
+
   redis:
     image: ghcr.io/startmunich/redis:latest
     hostname: redis
@@ -107,6 +107,8 @@ services:
       PORT: 5001
       CORS: https://monitor.start-rag.startmunich.de
       RERUN_DELAY_SEC: $RERUN_DELAY_SEC
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_API_TOKEN: redbull_blueberry
     labels:
       - traefik.enable=true
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
@@ -195,6 +197,20 @@ services:
       REPLICATE_API_TOKEN: $REPLICATE_API_TOKEN
       LLM_MODEL: mistralai/mistral-7b-instruct-v0.2:79052a3adbba8116ebc6697dcba67ad0d58feff23e7aeb2f103fc9aa545f9269
 
+  meilisearch:
+    container_name: meilisearch
+    image: getmeili/meilisearch:v0.25.2
+    environment:
+      - MEILI_MASTER_KEY=redbull_blueberry
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_ENV=production
+      - MEILI_DB_PATH=data.ms
+    ports:
+      - 7700:7700
+    volumes:
+      - ./data.ms:/data.ms
+      - "$HOME/startgpt/meilisearch/data.ms:/data.ms"
+    restart: unless-stopped
 volumes:
   letsencrypt:
     name: letsencrypt

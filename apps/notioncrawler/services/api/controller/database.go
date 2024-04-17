@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/meilisearch/meilisearch-go"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"net/http"
 )
@@ -59,4 +60,16 @@ func (c *ApiController) GetPages(ctx *fiber.Ctx) error {
 	return ctx.JSON(map[string]any{
 		"pages": items,
 	})
+}
+
+func (c *ApiController) Search(ctx *fiber.Ctx) error {
+	searchQuery := ctx.Query("q")
+	searchRes, err := c.meiliIndex.Search(searchQuery, &meilisearch.SearchRequest{
+		AttributesToHighlight: []string{"*"},
+	})
+	if err != nil {
+		return ctx.SendStatus(http.StatusInternalServerError)
+	}
+
+	return ctx.JSON(searchRes)
 }
