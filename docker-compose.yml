@@ -116,8 +116,6 @@ services:
   webcrawler:
     hostname: webcrawler
     restart: always
-    ports:
-      - "8001:8001"
     build:
       context: ./apps/webcrawler
       dockerfile: Dockerfile
