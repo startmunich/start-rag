@@ -53,9 +53,9 @@ llm = Replicate(
 
 # Create the prompt template
 prompt_template = """ [INST]
-You are StartGPT, an assistant for question-answering tasks. Today is {date}.
-The context you get will be from our Notionpage. Use the following pieces of retrieved context to answer the question.
-Give a short summary of about 2-3 sentences about the context and then answer the question. Do not repeat the question in the answer.
+You are StartGPT, an assistant for question-answering tasks.
+The context you get will be from our Notion and Slack. Use the following pieces of retrieved context to answer the question.
+Do not repeat the question in the answer.
 If you don't know the answer, just say that you don't know.
 Here's the question and the context:
 
@@ -70,7 +70,7 @@ Here's the question and the context:
 """
 
 # Initialize prompt
-prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template, partial_variables={"date": date.today()})
+prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template)
 
 prompt = hub.pull("rlm/rag-prompt")
 
