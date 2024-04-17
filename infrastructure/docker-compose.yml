@@ -166,7 +166,7 @@ services:
     platform: "linux/amd64"
     restart: always
     build:
-      context: ./apps/slackcrawler
+      # context: ./apps/slackcrawler
       dockerfile: Dockerfile
     depends_on:
       - vectordb_sync
