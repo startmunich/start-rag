@@ -1,11 +1,10 @@
 from langchain_community.document_loaders.async_html import AsyncHtmlLoader
 from langchain_community.document_transformers import Html2TextTransformer
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from dotenv import load_dotenv
 from neo4j import GraphDatabase
 import logging
 import os
 import time
+import requests
 
 logger = logging.getLogger('start_gpt')
 
@@ -22,6 +21,7 @@ while True:
     except:
         time.sleep(1)
 
+
 def load_web():
     logger.info("load_web")
 
@@ -31,10 +31,12 @@ def load_web():
         "https://www.startmunich.de/about-us",
         "https://www.startmunich.de/for-students",
         "https://www.startmunich.de/for-partners",
-        "https://www.startmunich.de/membership",
-        "https://www.startmunich.de/road-to-start-summit-2024",
-        "https://www.startmunich.de/road-to-start-hack",
-        "https://www.futurepynk.com"
+        "https://www.startmunich.de/apply",
+        "https://www.futurepynk.com",
+        "https://www.futurepynk.com/theroyaljungle",
+        "https://www.futurepynk.com/hamburg",
+        "https://www.futurepynk.com/munich",
+        "https://www.futurepynk.com/berlin",
     ]
 
     # Initialize loader with urls, load docs
@@ -48,13 +50,20 @@ def load_web():
         print(page.page_content)
     logger.info("load_web finished")
     return docs
+
+
 def write_db():
     logger.info(f"start writing web_data")
-    with neo4j_driver.session() as session:
-        docs = load_web()
-        # write each page into the neo4J database using the url as the id
-        # TODO ask Khadim about the hash and url attributes (to they need to be set or can they be blank?)
-        for page in docs:
+
+    docs = load_web()
+    # write each page into the neo4J database using the url as the id
+    web_ids = []
+
+    for page in docs:
+
+        web_ids.append(page.metadata.get("source"))
+
+        with neo4j_driver.session() as session:
             logger.info(f"adding page: " + page.metadata.get("source") + " to neo4j")
             session.run(
                 # merges the page with the current page_id
@@ -68,9 +77,27 @@ def write_db():
                 crawler_id="Webcrawler",
                 content=page.page_content
             )
-            logger.info(f"page: " + page.metadata.get("source") + " added to neo4j")
+        logger.info(f"page: " + page.metadata.get("source") + " added to neo4j")
 
+        # send post request to '/enqueue_slack' endpoint with message_id
+        # to add the message to the queue
+        # cf. vectordb_sync/vectordb_sync.py
+
+    requests.post("http://vectordb_sync:5000/enqueue_slack", json={"ids": web_ids})
+    logger.info(f"adding web_ids: to queue")
 
 
 if __name__ == '__main__':
-    load_web()
+    # Perform the crawling and storing process
+
+    while True:
+        try:
+            neo4j_driver.verify_connectivity()
+            requests.get(url="http://vectordb_sync:5000/ready")
+            break
+        except:
+            time.sleep(1)
+
+    write_db()
+    # Sleep for 1 day before running again
+    time.sleep(24 * 3600)
