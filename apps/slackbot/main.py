@@ -34,5 +34,19 @@ def event_test(event, say):
     
     say(f"<@{user}>" + " " + get_answer(query))
 
+
+@app.message()
+def on_message(message, say):
+    user = message["user"]
+    query = message["text"]
+    # check if user is key in registered_users
+    if user not in registered_users:
+        say("You are not registered to use this bot")
+        return
+    
+    print("Received Message\n | " + ", user: " + user + ", text: " + query)
+    
+    say(get_answer(query))
+
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
