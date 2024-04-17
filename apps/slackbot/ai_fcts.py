@@ -70,19 +70,24 @@ Here's the question and the context:
 """
 
 # Initialize prompt
-prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template, partial_variables={"date": date.today()})
+prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template, partial_variables={"date"})
 
 prompt = hub.pull("rlm/rag-prompt")
 
-qa_chain = RetrievalQA.from_chain_type(
+
+
+# create function to invoke the retrievalQA
+def get_answer(query: str) -> str:
+
+    qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     retriever=retriever,
     chain_type_kwargs={"prompt": prompt_template},
     verbose=False
-)
+)   
+    prompt_template.partial(date=date.today())
 
-# create function to invoke the retrievalQA
-def get_answer(query: str) -> str:
+
     
     response = qa_chain.invoke({'query': query})
     return response["result"]
