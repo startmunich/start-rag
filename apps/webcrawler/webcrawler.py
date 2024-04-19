@@ -5,13 +5,13 @@ import logging
 import os
 import time
 import requests
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger('start_gpt')
 
 neo4j_uri = os.getenv("NEO4J_URL")
 neo4j_user = os.getenv("NEO4J_USER")
 neo4j_pass = os.getenv("NEO4J_PASS")
-print(neo4j_uri)
 neo4j_driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_pass))
 # checks if connection to database can be established, else throws error
 while True:
@@ -46,8 +46,6 @@ def load_web():
     # Process raw HTML docs to text docs
     html2text = Html2TextTransformer()
     docs = html2text.transform_documents(docs)
-    for page in docs:
-        print(page.page_content)
     logger.info("load_web finished")
     return docs
 
@@ -70,9 +68,9 @@ def write_db():
                 # cf. notioncrawler/crawler/cache.go
                 "MERGE (n:CrawledPage { page_id: $page_id })\n" +
                 # if such an id doesn't yet exist create new node taking the pages attributes
-                "ON CREATE SET n.crawlerId=$crawler_id, n.url=$url, n.content=$content, n.child_pages=$child_pages, n.hash=$hash\n" +
+                "ON CREATE SET n.crawlerId=$crawler_id, n.content=$content, n.page_id=$page_id\n" +
                 # if such a node exists update the attributes that exists in page
-                "ON MATCH SET n.crawlerId=$crawler_id, n.url=$url, n.content=$content, n.child_pages=$child_pages, n.hash=$hash\n",
+                "ON MATCH SET n.crawlerId=$crawler_id, n.content=$content, n.page_id=$page_id\n",
                 page_id=page.metadata.get("source"),
                 crawler_id="Webcrawler",
                 content=page.page_content
