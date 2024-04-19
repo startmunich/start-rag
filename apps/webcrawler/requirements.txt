@@ -1,3 +1,5 @@
 neo4j == 5.18.0
 langchain
 langchain_community
+beautifulsoup4
+html2text
