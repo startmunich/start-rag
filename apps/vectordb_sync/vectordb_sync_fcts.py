@@ -127,6 +127,7 @@ def web_to_qdrant(id_to_process):
     # 2. preprocess content as far as necessary
     # 3. embedd content with infinity
     # 4. insert into qdrant
+
     id_to_process = f'{id_to_process}'
     with neo4j_driver.session() as session:
         # returns the entry from the neo4j db for this id
@@ -134,16 +135,14 @@ def web_to_qdrant(id_to_process):
             "MATCH (n:CrawledPage {page_id: $id}) RETURN n.content AS content",
             id=id_to_process,
         )
-
         # check if result is empty, then throw error
         if result.peek() is None:
             raise ValueError("No result found for id_to_process for web_to_qdrant")
 
         record = result.single()
 
-        record_content = record.get("content")  # should be string?
+        record_content = record.get("content")
         content = str(record_content)
-
         complete_content = []
 
         complete_content += text_splitter.split_text(text=content)
@@ -181,7 +180,7 @@ def web_to_qdrant(id_to_process):
                                         vector=chunk_embedding,
                                         payload={"content": chunk, "page_id": id_to_process, "type": "web"}) for
                             chunk_embedding, chunk in zip(chunks_embedded, chunks)]
-
+        
         qdrant_client.upsert(
             collection_name=qdrant_collection_name,
             points=points_to_update
