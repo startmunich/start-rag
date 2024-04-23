@@ -159,7 +159,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997/v1
-      INFINITY_COLLECTION_NAME: bge-large-en
+      INFINITY_MODEL: BAAI/bge-large-en-v1.5
 
   slackcrawler:
     hostname: slackcrawler
