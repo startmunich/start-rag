@@ -10,7 +10,7 @@ services:
   infinity:
     image: "michaelf34/infinity"
     hostname: infinity
-    command: --model-name-or-path BAAI/bge-small-en-v1.5
+    command: --model-name-or-path BAAI/bge-large-en-v1.5
     ports:
       - "7997:7997"
 
@@ -112,7 +112,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997
-      INFINITY_MODEL: bge-small-en-v1.5
+      INFINITY_MODEL: BAAI/bge-large-en-v1.5
     env_file:
       - .env
       - .env.local
@@ -130,7 +130,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997
-      INFINITY_MODEL: BAAI/bge-small-en-v1.5
+      INFINITY_MODEL: BAAI/bge-large-en-v1.5
     env_file:
       - .env
       - .env.local
