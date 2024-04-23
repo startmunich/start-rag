@@ -44,7 +44,7 @@ llm = Replicate(
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
     model=llm_model,
-    model_kwargs={"temperature": 0.6, "max_length": 1500, "top_p": 0.9, "top_k": 50, "max_new_tokens": 200,
+    model_kwargs={"temperature": 0.2, "max_length": 1500, "top_p": 0.9, "top_k": 50, "max_new_tokens": 400,
         "min_new_tokens": 20, "repetition_penalty": 0.1},
     verbose = False
 )
@@ -54,17 +54,15 @@ llm = Replicate(
 # Create the prompt template
 prompt_template = """ [INST]
 You are StartGPT, an assistant for question-answering tasks.
-The context you get will be from our Notion and Slack. Use the following pieces of retrieved context to answer the question.
-Do not repeat the question in your answer!
-Here's the question and the context:
-
-<Beginning of question>
-{question}
-<End of question>
+The context you get will be from our Notion and Slack. Summarize the context and answer the question.
 
 <Beginning of context>
 {context} 
 <End of context>
+
+<Beginning of question>
+{question}
+<End of question>
 [INST]
 """
 
