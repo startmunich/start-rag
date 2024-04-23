@@ -37,7 +37,7 @@ qdrant_db = Qdrant(
 )
 
 # Create the retriever
-retriever = qdrant_db.as_retriever(search_type = "mmr", search_kwargs={"k": 5, "fetch_k": 20})
+retriever = qdrant_db.as_retriever(search_kwargs={"k": 5})
 
 # Create the language model
 llm = Replicate(
@@ -55,8 +55,7 @@ llm = Replicate(
 prompt_template = """ [INST]
 You are StartGPT, an assistant for question-answering tasks.
 The context you get will be from our Notion and Slack. Use the following pieces of retrieved context to answer the question.
-Do not repeat the question in the answer.
-If you don't know the answer, just say that you don't know.
+Do not repeat the question in your answer!
 Here's the question and the context:
 
 <Beginning of question>
@@ -72,7 +71,7 @@ Here's the question and the context:
 # Initialize prompt
 prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template)
 
-prompt = hub.pull("rlm/rag-prompt")
+# prompt = hub.pull("rlm/rag-prompt")
 
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
