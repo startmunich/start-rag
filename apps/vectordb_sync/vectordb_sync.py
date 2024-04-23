@@ -5,7 +5,7 @@
 # Each individual content is bein preprocessed by langchain and inserted into a qdrant collection. 
 # The embeddings are created with infinity.
 ###
-
+# trigger build
 from flask import Flask, request, jsonify
 from neo4j import GraphDatabase
 import langchain.text_splitter
