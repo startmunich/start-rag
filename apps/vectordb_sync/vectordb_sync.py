@@ -128,7 +128,7 @@ if __name__ == '__main__':
     if requests.get(url=f"{qdrant_uri}/collections/{qdrant_collection_name}/exists").json()["result"]["exists"] == False:
         # create collection if not exists
         qdrant_client.create_collection(collection_name=qdrant_collection_name, 
-                                        vectors_config=VectorParams(size=384, distance="Cosine"),
+                                        vectors_config=VectorParams(size=1024, distance="Cosine"),
                                         on_disk_payload=True,)
 
     while True:
