@@ -17,7 +17,7 @@ from datetime import date
 # Load and export the environment variables
 # load_dotenv(dotenv_path="apps/slackbot/.env.local")
 
-
+# trigger new build
 
 # REPLICATE_API_TOKEN  = os.environ["REPLICATE_API_KEY"]
 qdrant_uri = os.environ["QDRANT_URL"]
