@@ -81,7 +81,7 @@ func main() {
 
 	stateMgr := state.New()
 
-	go api.Run(stateMgr, neo4jOptions, meiliIndex, fmt.Sprintf(":%s", port), corsDomains)
+	go api.Run(stateMgr, neo4jOptions, meiliIndex, vectorQueue, fmt.Sprintf(":%s", port), corsDomains)
 
 	println("Waiting for Vector Queue ...")
 	vectorQueue.WaitForReady()
