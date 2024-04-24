@@ -125,11 +125,14 @@ if __name__ == '__main__':
     queue_processor_thread.start()
 
     # check if qdrant collection exists
-    # if requests.get(url=f"{qdrant_uri}/collections/{qdrant_collection_name}/exists").json()["result"]["exists"] == False:
+    if requests.get(url=f"{qdrant_uri}/collections/{qdrant_collection_name}/exists").json()["result"]["exists"] == False:
+        # delete collection if exists
+        qdrant_client.delete_collection(collection_name=qdrant_collection_name)
+
         # create collection if not exists
-    qdrant_client.create_collection(collection_name=qdrant_collection_name, 
-                                    vectors_config=VectorParams(size=1024, distance="Cosine"),
-                                    on_disk_payload=True,)
+        qdrant_client.create_collection(collection_name=qdrant_collection_name, 
+                                        vectors_config=VectorParams(size=1024, distance="Cosine"),
+                                        on_disk_payload=True,)
 
     while True:
         try:
