@@ -81,6 +81,10 @@ def process_queue():
             app.logger.info("Queue is empty, waiting for 10 seconds")
             time.sleep(10)
 
+@app.route('/empty_redis', methods=['POST'])
+def empty_redis():
+    redis.delete('content_queue')
+    return jsonify({"message": "Redis queue cleared"}), 200
 
 
 @app.route('/enqueue', methods=['POST']) # rename to enqueue_notion together with notion_Crwaler
