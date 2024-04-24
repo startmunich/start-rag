@@ -53,7 +53,8 @@ def notion_to_qdrant(id_to_process) -> None:
             "MATCH (n:CrawledPage {page_id: $id}) RETURN n.content AS content",
             id=id_to_process,
         )
-        
+        print("Result form session run", result)
+        print("id to process", id_to_process)
         record = result.single()
         
         record_content = record.get("content")
