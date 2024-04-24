@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
     while True:
         try:
-            requests.get(url=f"{infinity_api_url}/ready")
+            requests.get(url=f"{infinity_api_url}/health")
             neo4j_driver.verify_connectivity()
             break
         except:
