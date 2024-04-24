@@ -53,7 +53,11 @@ def process_queue():
     while True:
         if redis.llen('content_queue') != 0:
 
+            
+
             task = json.loads(redis.rpop('content_queue'))
+
+            print(f"One ID from redis queue popped")
 
             id_to_process = task["id"]
 
@@ -127,7 +131,7 @@ if __name__ == '__main__':
     # check if qdrant collection exists
     if requests.get(url=f"{qdrant_uri}/collections/{qdrant_collection_name}/exists").json()["result"]["exists"] == False:
         # delete collection if exists
-        qdrant_client.delete_collection(collection_name=qdrant_collection_name)
+        # qdrant_client.delete_collection(collection_name=qdrant_collection_name)
 
         # create collection if not exists
         qdrant_client.create_collection(collection_name=qdrant_collection_name, 
