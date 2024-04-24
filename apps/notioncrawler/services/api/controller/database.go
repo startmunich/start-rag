@@ -10,6 +10,10 @@ import (
 )
 
 func (c *ApiController) PurgeDb(ctx *fiber.Ctx) error {
+	if err := c.vectorQueue.PurgeQueue(); err != nil {
+		println("Warn: cannot purge vector queue")
+		return err
+	}
 	if result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
 		"MATCH (n:CrawledPage)\nDETACH DELETE n",
 		map[string]any{}, neo4j.EagerResultTransformer); err != nil {
