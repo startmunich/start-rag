@@ -31,7 +31,7 @@ qdrant_db = Qdrant(
     client=QdrantClient(url=qdrant_uri, port=6333),
     collection_name=qdrant_collection_name,
     content_payload_key="content",
-    metadata_payload_key=None,
+    metadata_payload_key="page_id",
     distance_strategy="Cosine",
     embeddings=InfinityEmbeddings(model=infinity_model, infinity_api_url=infinity_api_url)
 )
@@ -54,7 +54,7 @@ llm = Replicate(
 # Create the prompt template
 prompt_template = """ [INST]
 You are StartGPT, an assistant for question-answering tasks.
-The context you get will be from our Notion and Slack. Summarize the context and answer the question. Add whenever possible a link to the corrsponding Notion page.
+The context you get will be from our Notion and Slack. Summarize the context and answer the question.
 
 <Beginning of context>
 {context} 
@@ -80,7 +80,7 @@ prompt_template = PromptTemplate(input_variables=["question", "context"], templa
 def format_docs(docs):
     context = ""
     for index, doc in enumerate(docs):
-        context += f"Document Rank {index + 1}: {doc.page_content}\n\n"
+        context += f"Document Rank {index + 1}: Page Link: {doc.metadata["page_id"]} {doc.page_content}\n\n"
     return context
 
 # create function to invoke the retrievalQA
@@ -97,9 +97,9 @@ def get_answer(query: str) -> str:
     prompt = prompt_template.format(context=context, question=query)
 
     response = llm.invoke(prompt)
-    print(f"Retrieved docs: {docs}\n Retrieved context: {context}\n Generated response: {response}")
+    # print(f"Retrieved docs: {docs}\n Retrieved context: {context}\n Generated response: {response}")
 
-    return response
+    return f"Retrieved context: {context}\n Generated response: {response}"
 
 
 
