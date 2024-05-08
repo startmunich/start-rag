@@ -31,7 +31,7 @@ qdrant_db = Qdrant(
     client=QdrantClient(url=qdrant_uri, port=6333),
     collection_name=qdrant_collection_name,
     content_payload_key="content",
-    metadata_payload_key="page_id",
+    metadata_payload_key=None,
     distance_strategy="Cosine",
     embeddings=InfinityEmbeddings(model=infinity_model, infinity_api_url=infinity_api_url)
 )
