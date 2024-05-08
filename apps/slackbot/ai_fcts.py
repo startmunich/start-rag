@@ -98,7 +98,7 @@ def get_answer(query: str) -> str:
 
     response = llm.invoke(prompt)
 
-    return response
+    return f"Retrieved context: {context}\n Generated response: {response}"
 
 
 
