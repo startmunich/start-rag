@@ -71,18 +71,32 @@ prompt_template = PromptTemplate(input_variables=["question", "context"], templa
 
 # prompt = hub.pull("rlm/rag-prompt")
 
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    retriever=retriever,
-    chain_type_kwargs={"prompt": prompt_template},
-    verbose=False
-)
+# qa_chain = RetrievalQA.from_chain_type(
+#     llm=llm,
+#     retriever=retriever,
+#     chain_type_kwargs={"prompt": prompt_template},
+#     verbose=False
+# )
+def format_docs(docs):
+    context = ""
+    for index, doc in enumerate(docs):
+        context += f"Document Rank {index + 1}: {doc.page_content}\n\n"
+    return context
 
 # create function to invoke the retrievalQA
 def get_answer(query: str) -> str:
     
-    response = qa_chain.invoke({'query': query})
-    return response["result"]
+    docs = retriever.invoke(query)
+
+    # create string of all the documents
+    
+    context = format_docs(docs)
+
+    # enter context into the prompt
+
+    response = llm.invoke(prompt_template, {"question": query, "context": context})
+
+    return response
 
 
 
