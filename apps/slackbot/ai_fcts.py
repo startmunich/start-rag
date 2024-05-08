@@ -94,7 +94,9 @@ def get_answer(query: str) -> str:
 
     # enter context into the prompt
 
-    response = llm.invoke(prompt_template, {"question": query, "context": context})
+    prompt = prompt_template.format(context=context, question=query)
+
+    response = llm.invoke(prompt)
 
     return response
 
