@@ -54,7 +54,7 @@ llm = Replicate(
 # Create the prompt template
 prompt_template = """ [INST]
 You are StartGPT, an assistant for question-answering tasks.
-The context you get will be from our Notion and Slack. Summarize the context and answer the question.
+The context you get will be from our Notion and Slack. Summarize the context and answer the question. Add whenever possible a link to the corrsponding Notion page.
 
 <Beginning of context>
 {context} 
