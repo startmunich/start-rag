@@ -80,7 +80,7 @@ prompt_template = PromptTemplate(input_variables=["question", "context"], templa
 def format_docs(docs):
     context = ""
     for index, doc in enumerate(docs):
-        context += f"Document Rank {index + 1}: Page Link: {doc.metadata} {doc.page_content}\n\n"
+        context += f"Document Rank {index + 1}: {doc.page_content}\n\n"
     return context
 
 # create function to invoke the retrievalQA
