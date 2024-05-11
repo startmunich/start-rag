@@ -86,8 +86,8 @@ def empty_redis():
     redis.delete('content_queue')
     return jsonify({"message": "Redis queue cleared"}), 200
 
-@app.route('/redis_lenght', methods=['POST'])
-def redis_lenght():
+@app.route('/redis_length', methods=['POST'])
+def redis_length():
     len = redis.llen('content_queue')
     return jsonify({"message": len}), 200
 
