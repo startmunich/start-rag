@@ -144,7 +144,7 @@ func main() {
 			if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_processing_item_started").
 				AddField("processed", processed).
 				AddField("cacheMisses", cacheMisses).
-				AddField("timeElapsed", time.Since(start)).
+				AddField("timeElapsed", time.Since(start).Milliseconds()).
 				SetTime(time.Now())); err != nil {
 				log.Println("Failed to write influxdb point")
 			}
@@ -162,9 +162,9 @@ func main() {
 			if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_processing_item_ended").
 				AddField("processed", processed).
 				AddField("cacheMisses", cacheMisses).
-				AddField("timeElapsed", time.Since(start)).
+				AddField("timeElapsed", time.Since(start).Milliseconds()).
 				AddField("wasCacheMiss", res.CacheMiss).
-				AddField("itemCrawlDuration", elapsedItem).
+				AddField("itemCrawlDuration", elapsedItem.Milliseconds()).
 				SetTime(time.Now())); err != nil {
 				log.Println("Failed to write influxdb point")
 			}
@@ -176,7 +176,7 @@ func main() {
 		if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_ended").
 			AddField("processed", processed).
 			AddField("cacheMisses", cacheMisses).
-			AddField("timeElapsed", elapsed).
+			AddField("timeElapsed", elapsed.Milliseconds()).
 			AddField("wasCanceled", wasCanceled).
 			SetTime(time.Now())); err != nil {
 			log.Println("Failed to write influxdb point")
