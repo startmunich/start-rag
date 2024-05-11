@@ -109,6 +109,10 @@ services:
       RERUN_DELAY_SEC: $RERUN_DELAY_SEC
       MEILISEARCH_URL: http://meilisearch:7700
       MEILISEARCH_API_TOKEN: redbull_blueberry
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: $INFLUXDB_ADMIN_TOKEN
+      INFLUXDB_ORG: start_munich
+      INFLUXDB_BUCKET: startgpt
     labels:
       - traefik.enable=true
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
@@ -204,7 +208,6 @@ services:
       NEO4J_USER: neo4j
       NEO4J_PASS: redbull_wildberry
 
-      
   meilisearch:
     hostname: meilisearch
     image: getmeili/meilisearch:v0.25.2
@@ -217,6 +220,33 @@ services:
       - ./data.ms:/data.ms
       - "$HOME/startgpt/meilisearch/data.ms:/data.ms"
     restart: unless-stopped
+
+  influxdb:
+    image: influxdb:2.6-alpine
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=startgpt
+      - DOCKER_INFLUXDB_INIT_PASSWORD=$INFLUXDB_SETUP_PASSWORD
+      - DOCKER_INFLUXDB_INIT_ORG=start_munich
+      - DOCKER_INFLUXDB_INIT_BUCKET=startgpt
+      - DOCKER_INFLUXDB_INIT_RETENTION=1w
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$INFLUXDB_ADMIN_TOKEN
+    volumes:
+      - $HOME/startgpt/influxdb:/var/lib/influxdb2:rw
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.influxdb-http.rule=Host(`influx.start-rag.startmunich.de`)
+      - traefik.http.routers.influxdb-http.entrypoints=web
+      - traefik.http.routers.influxdb-http.middlewares=https-redirect
+      - traefik.http.routers.influxdb-https.rule=Host(`influx.start-rag.startmunich.de`)
+      - traefik.http.routers.influxdb-https.entrypoints=webs
+      - traefik.http.routers.influxdb-https.tls=true
+      - traefik.http.routers.influxdb-https.service=influxdb
+      - traefik.http.routers.influxdb-https.tls.certresolver=mycaresolver
+      - traefik.http.services.influxdb.loadbalancer.server.port=8086
+
 volumes:
   letsencrypt:
     name: letsencrypt

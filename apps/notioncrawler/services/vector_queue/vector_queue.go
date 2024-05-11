@@ -60,3 +60,16 @@ func (v *VectorQueue) PurgeQueue() error {
 	}
 	return nil
 }
+
+func (v *VectorQueue) PurgeVectorDb() error {
+	url := fmt.Sprintf("%s/empty_qdrant", v.basePath)
+
+	if res, err := http.Post(url, "application/json", bytes.NewBuffer([]byte{})); err != nil {
+		return err
+	} else if res == nil {
+		return errors.New(fmt.Sprintf("Could not reach %s", url))
+	} else if res.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("Failed with status code %d", res.StatusCode))
+	}
+	return nil
+}

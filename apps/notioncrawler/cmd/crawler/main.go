@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/meilisearch/meilisearch-go"
 	"log"
 	"notioncrawl/services/api"
@@ -11,6 +13,7 @@ import (
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
 	"notioncrawl/services/state"
+	"notioncrawl/services/utils/run_mgr"
 	"notioncrawl/services/vector_queue"
 	"os"
 	"strconv"
@@ -46,6 +49,11 @@ func main() {
 	neo4jUser := mustEnv("NEO4J_USER")
 	neo4jPass := mustEnv("NEO4J_PASS")
 
+	influxDbUrl := mustEnv("INFLUXDB_URL")
+	influxDbToken := mustEnv("INFLUXDB_TOKEN")
+	influxDbOrg := mustEnv("INFLUXDB_ORG")
+	influxDbBucket := mustEnv("INFLUXDB_BUCKET")
+
 	port := mustEnv("PORT")
 
 	corsDomains := mustEnv("CORS")
@@ -53,6 +61,9 @@ func main() {
 	reRunDelayDuration := time.Second * time.Duration(reRunDelaySec)
 
 	vectorQueue := vector_queue.New(vectorQueueUrl)
+
+	influxDb := influxdb2.NewClient(influxDbUrl, influxDbToken)
+	influxWriteAPI := influxDb.WriteAPIBlocking(influxDbOrg, influxDbBucket)
 
 	neo4jOptions := crawler.Neo4jOptions{
 		Address:  neo4jUrl,
@@ -80,8 +91,9 @@ func main() {
 	})
 
 	stateMgr := state.New()
+	runMgr := run_mgr.New()
 
-	go api.Run(stateMgr, neo4jOptions, meiliIndex, vectorQueue, fmt.Sprintf(":%s", port), corsDomains)
+	go api.Run(stateMgr, runMgr, neo4jOptions, meiliIndex, vectorQueue, fmt.Sprintf(":%s", port), corsDomains)
 
 	println("Waiting for Vector Queue ...")
 	vectorQueue.WaitForReady()
@@ -94,7 +106,12 @@ func main() {
 
 	for {
 		start := time.Now()
+		runMgr.Reset()
 		log.Printf("Starting Notioncrawler")
+		if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_started").
+			SetTime(time.Now())); err != nil {
+			log.Println("Failed to write influxdb point")
+		}
 		stateMgr.UpdateIsRunning(true).UpdateLastRunStartedAt(time.Now().UTC().UnixMilli())
 		crawlerInstance := crawler.New(
 			stateMgr,
@@ -113,21 +130,57 @@ func main() {
 
 		processed := uint64(0)
 		cacheMisses := uint64(0)
+		wasCanceled := false
 		for crawlerInstance.HasNext() {
+			if runMgr.ShouldCancel() {
+				log.Println(fmt.Sprintf("Run Canceled!"))
+				wasCanceled = true
+				break
+			}
+
 			log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
 			stateMgr.UpdateInQueue(uint64(crawlerInstance.QueueSize())).UpdateProcessed(processed).UpdateCacheMisses(cacheMisses)
 
-			if res, err := crawlerInstance.CrawlNext(); err != nil {
+			if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_processing_item_started").
+				AddField("processed", processed).
+				AddField("cacheMisses", cacheMisses).
+				AddField("timeElapsed", time.Since(start)).
+				SetTime(time.Now())); err != nil {
+				log.Println("Failed to write influxdb point")
+			}
+
+			startItem := time.Now()
+			res, err := crawlerInstance.CrawlNext()
+			if err != nil {
 				log.Println(err.Error())
 			} else if res.CacheMiss {
 				cacheMisses += 1
 			}
+			elapsedItem := time.Since(startItem)
 			processed += 1
+
+			if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_processing_item_ended").
+				AddField("processed", processed).
+				AddField("cacheMisses", cacheMisses).
+				AddField("timeElapsed", time.Since(start)).
+				AddField("wasCacheMiss", res.CacheMiss).
+				AddField("itemCrawlDuration", elapsedItem).
+				SetTime(time.Now())); err != nil {
+				log.Println("Failed to write influxdb point")
+			}
 		}
 		crawlerInstance.Close()
 
 		elapsed := time.Since(start)
 		log.Printf("Notioncrawler took %s", elapsed)
+		if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_ended").
+			AddField("processed", processed).
+			AddField("cacheMisses", cacheMisses).
+			AddField("timeElapsed", elapsed).
+			AddField("wasCanceled", wasCanceled).
+			SetTime(time.Now())); err != nil {
+			log.Println("Failed to write influxdb point")
+		}
 		stateMgr.UpdateIsRunning(false).UpdateLastRunDuration(
 			uint64(elapsed.Milliseconds()),
 		).UpdateLastRunEndedAt(

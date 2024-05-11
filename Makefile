@@ -5,4 +5,4 @@ up-vectordb_sync:
 	docker-compose up vectordb_sync
 
 up-notioncrawler:
-	docker-compose up --no-deps --build notioncrawler
+	docker-compose up --build notioncrawler

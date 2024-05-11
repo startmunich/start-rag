@@ -50,6 +50,7 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - neo4j
+      - influxdb
     ports:
       - "8000:8000"
     environment:
@@ -59,6 +60,10 @@ services:
       VECTOR_QUEUE_URL: http://vectordb_sync:5000
       MEILISEARCH_URL: http://meilisearch:7700
       MEILISEARCH_API_TOKEN: redbull_blueberry
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: redbull_mango
+      INFLUXDB_ORG: start_munich
+      INFLUXDB_BUCKET: startgpt
       CORS: "*"
       PORT: 8000
     env_file:
@@ -165,3 +170,17 @@ services:
       - "$HOME/startgpt/meilisearch/data.ms:/data.ms"
     restart: unless-stopped
 
+  influxdb:
+    image: influxdb:2.6-alpine
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=startgpt
+      - DOCKER_INFLUXDB_INIT_PASSWORD=redbull_coconut
+      - DOCKER_INFLUXDB_INIT_ORG=start_munich
+      - DOCKER_INFLUXDB_INIT_BUCKET=startgpt
+      - DOCKER_INFLUXDB_INIT_RETENTION=1w
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=redbull_mango
+    volumes:
+      - $HOME/startgpt/influxdb:/var/lib/influxdb2:rw
+    ports:
+      - "8086:8086"

@@ -10,8 +10,17 @@ import (
 )
 
 func (c *ApiController) PurgeDb(ctx *fiber.Ctx) error {
+	c.runMgr.CancelCurrentRun()
 	if err := c.vectorQueue.PurgeQueue(); err != nil {
 		println("Warn: cannot purge vector queue")
+		return err
+	}
+	if err := c.vectorQueue.PurgeVectorDb(); err != nil {
+		println("Warn: cannot purge vector database")
+		return err
+	}
+	if _, err := c.meiliIndex.DeleteAllDocuments(); err != nil {
+		println("Warn: cannot purge meili index")
 		return err
 	}
 	if result, err := neo4j.ExecuteQuery(context.Background(), c.neo4j,
