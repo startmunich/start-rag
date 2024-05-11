@@ -193,6 +193,18 @@ services:
       REPLICATE_API_TOKEN: $REPLICATE_API_TOKEN
       LLM_MODEL: mistralai/mixtral-8x7b-instruct-v0.1:2b56576fcfbe32fa0526897d8385dd3fb3d36ba6fd0dbe033c72886b81ade93e
 
+  webcrawler:
+    hostname: webcrawler
+    restart: always
+    image: ghcr.io/startmunich/webcrawler:latest
+    depends_on:
+      - neo4j
+    environment:
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: redbull_wildberry
+
+      
   meilisearch:
     hostname: meilisearch
     image: getmeili/meilisearch:v0.25.2
