@@ -162,7 +162,7 @@ services:
       NEO4J_PASS: redbull_wildberry
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
-      INFINITY_URL: http://infinity:7997/v1
+      INFINITY_URL: http://infinity:7997
       INFINITY_MODEL: BAAI/bge-large-en-v1.5
 
   slackcrawler:
