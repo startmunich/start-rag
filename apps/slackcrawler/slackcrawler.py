@@ -15,7 +15,7 @@ neo4j_pass = os.getenv("NEO4J_PASS")
 
 # Define Slack credentials
 ## TODO: Add rleevant slack channels
-SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
+SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 # load channels from json file and store them in SLACK_CHANNELS
 SLACK_CHANNELS = []
 with open('relevant_channels.json') as f:
