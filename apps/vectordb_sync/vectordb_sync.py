@@ -5,7 +5,7 @@
 # Each individual content is bein preprocessed by langchain and inserted into a qdrant collection. 
 # The embeddings are created with infinity.
 ###
-
+# trigger build
 from flask import Flask, request, jsonify
 from neo4j import GraphDatabase
 import langchain.text_splitter
@@ -53,7 +53,11 @@ def process_queue():
     while True:
         if redis.llen('content_queue') != 0:
 
+            
+
             task = json.loads(redis.rpop('content_queue'))
+
+            print(f"One ID from redis queue popped")
 
             id_to_process = task["id"]
 
@@ -77,6 +81,10 @@ def process_queue():
             app.logger.info("Queue is empty, waiting for 10 seconds")
             time.sleep(10)
 
+@app.route('/empty_redis', methods=['POST'])
+def empty_redis():
+    redis.delete('content_queue')
+    return jsonify({"message": "Redis queue cleared"}), 200
 
 
 @app.route('/enqueue', methods=['POST']) # rename to enqueue_notion together with notion_Crwaler
@@ -111,7 +119,18 @@ def enqueue_web(): # make data to dict with id and type before pushing to redis 
 
 @app.route('/enqueue_slack', methods=['POST'])
 def enqueue_slack(): # make data to dict with id and type before pushing to redis list
-    pass
+    app.logger.info('json payload')
+    app.logger.info(request.json)
+    data = request.json
+    if 'ids' in data:
+        for id_to_enqueue in data['ids']:
+            sendeable_data = json.dumps({"id" : id_to_enqueue, "type" : "slack"})
+            redis.lpush("content_queue", sendeable_data)
+            print(f"ID {id_to_enqueue} enqueued successfully")
+        return jsonify({"message": "IDs enqueued successfully"}), 200
+    else:
+        print("No IDs provided")
+        return jsonify({"error": "No IDs provided"}), 400
     
 @app.route('/ready', methods=['GET'])
 def ready():
@@ -126,14 +145,17 @@ if __name__ == '__main__':
 
     # check if qdrant collection exists
     if requests.get(url=f"{qdrant_uri}/collections/{qdrant_collection_name}/exists").json()["result"]["exists"] == False:
+        # delete collection if exists
+        # qdrant_client.delete_collection(collection_name=qdrant_collection_name)
+
         # create collection if not exists
         qdrant_client.create_collection(collection_name=qdrant_collection_name, 
-                                        vectors_config=VectorParams(size=384, distance="Cosine"),
+                                        vectors_config=VectorParams(size=1024, distance="Cosine"),
                                         on_disk_payload=True,)
 
     while True:
         try:
-            requests.get(url=f"{infinity_api_url}/ready")
+            requests.get(url=f"{infinity_api_url}/health")
             neo4j_driver.verify_connectivity()
             break
         except:

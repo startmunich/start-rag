@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/meilisearch/meilisearch-go"
 	"log"
 	"notioncrawl/services/api"
 	"notioncrawl/services/crawler"
@@ -32,13 +33,13 @@ func mustParseInt64(num string) uint64 {
 }
 
 func main() {
-	start := time.Now()
-
 	tokenv2 := mustEnv("TOKEN_V2")
 	spaceId := mustEnv("SPACE_ID")
 	startPageId := mustEnv("START_PAGE_ID")
 	reRunDelaySec := mustParseInt64(mustEnv("RERUN_DELAY_SEC"))
 
+	meilisearchUrl := mustEnv("MEILISEARCH_URL")
+	meilisearchApiToken := mustEnv("MEILISEARCH_API_TOKEN")
 	vectorQueueUrl := mustEnv("VECTOR_QUEUE_URL")
 
 	neo4jUrl := mustEnv("NEO4J_URL")
@@ -59,6 +60,13 @@ func main() {
 		Password: neo4jPass,
 	}
 
+	meiliClient := meilisearch.NewClient(meilisearch.ClientConfig{
+		Host:   meilisearchUrl,
+		APIKey: meilisearchApiToken,
+	})
+
+	meiliIndex := meiliClient.Index("pages")
+
 	downloadDir, err := os.MkdirTemp("", "notioncrawler_download")
 	if err != nil {
 		panic("Failed to create temp download folder")
@@ -73,7 +81,7 @@ func main() {
 
 	stateMgr := state.New()
 
-	go api.Run(stateMgr, neo4jOptions, fmt.Sprintf(":%s", port), corsDomains)
+	go api.Run(stateMgr, neo4jOptions, meiliIndex, vectorQueue, fmt.Sprintf(":%s", port), corsDomains)
 
 	println("Waiting for Vector Queue ...")
 	vectorQueue.WaitForReady()
@@ -85,12 +93,14 @@ func main() {
 	workspaceExporter := unofficial_workspace_exporter.New(notionClient)
 
 	for {
+		start := time.Now()
 		log.Printf("Starting Notioncrawler")
 		stateMgr.UpdateIsRunning(true).UpdateLastRunStartedAt(time.Now().UTC().UnixMilli())
 		crawlerInstance := crawler.New(
 			stateMgr,
 			neo4jOptions,
 			vectorQueue,
+			meiliIndex,
 			startPageId,
 			metaCrawler,
 			childrenCrawler,
@@ -102,12 +112,15 @@ func main() {
 		)
 
 		processed := uint64(0)
+		cacheMisses := uint64(0)
 		for crawlerInstance.HasNext() {
 			log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
-			stateMgr.UpdateInQueue(uint64(crawlerInstance.QueueSize())).UpdateProcessed(processed)
-			err := crawlerInstance.CrawlNext()
-			if err != nil {
+			stateMgr.UpdateInQueue(uint64(crawlerInstance.QueueSize())).UpdateProcessed(processed).UpdateCacheMisses(cacheMisses)
+
+			if res, err := crawlerInstance.CrawlNext(); err != nil {
 				log.Println(err.Error())
+			} else if res.CacheMiss {
+				cacheMisses += 1
 			}
 			processed += 1
 		}
@@ -121,7 +134,9 @@ func main() {
 			time.Now().UTC().UnixMilli(),
 		).UpdateNextRunAt(
 			time.Now().UTC().UnixMilli() + reRunDelayDuration.Milliseconds(),
-		)
+		).UpdateInQueue(
+			0,
+		).UpdateProcessed(processed).UpdateCacheMisses(cacheMisses)
 		time.Sleep(reRunDelayDuration)
 	}
 }

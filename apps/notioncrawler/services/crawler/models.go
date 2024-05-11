@@ -1,5 +1,7 @@
 package crawler
 
+import "fmt"
+
 type MetaCrawler interface {
 	CrawlMeta(blockId string, parentId string) (*CrawledPage, error)
 }
@@ -32,6 +34,14 @@ type CrawlContent struct {
 	Type     CrawlContentType `json:"content_type"`
 	FileName string           `json:"file_name"`
 	Content  string           `json:"content"`
+}
+
+func (c CrawlContent) String() string {
+	return fmt.Sprintf("%s [%s]\n%s", c.FileName, c.Type, c.Content)
+}
+
+type CrawlNextResult struct {
+	CacheMiss bool
 }
 
 type CrawlQueueEntry struct {

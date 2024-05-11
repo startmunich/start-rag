@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 
 services:
   traefik:
@@ -60,7 +60,7 @@ services:
   infinity:
     image: "michaelf34/infinity"
     hostname: infinity
-    command: --model-name-or-path BAAI/bge-small-en
+    command: --model-name-or-path BAAI/bge-large-en-v1.5
     expose:
       - "7997"
 
@@ -69,8 +69,8 @@ services:
     restart: always
     image: neo4j:5.17
     volumes:
-      - '$HOME/startgpt/neo4j/data:/data'
-      - '$HOME/startgpt/neo4j/conf/:/conf/'
+      - "$HOME/startgpt/neo4j/data:/data"
+      - "$HOME/startgpt/neo4j/conf/:/conf/"
     expose:
       - "7474"
       - "7687"
@@ -82,6 +82,12 @@ services:
       - server.default_listen_address=0.0.0.0
       - initial.dbms.default_database=neo4j
       - NEO4J_AUTH=neo4j/redbull_wildberry
+
+  redis:
+    image: ghcr.io/startmunich/redis:latest
+    hostname: redis
+    expose:
+      - "6379"
 
   notioncrawler:
     image: ghcr.io/startmunich/notioncrawler:latest
@@ -101,6 +107,8 @@ services:
       PORT: 5001
       CORS: https://monitor.start-rag.startmunich.de
       RERUN_DELAY_SEC: $RERUN_DELAY_SEC
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_API_TOKEN: redbull_blueberry
     labels:
       - traefik.enable=true
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
@@ -142,6 +150,8 @@ services:
     depends_on:
       - neo4j
       - qdrant
+      - infinity
+      - redis
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j
@@ -149,7 +159,20 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997/v1
-      INFINITY_COLLECTION_NAME: bge-small-en
+      INFINITY_MODEL: BAAI/bge-large-en-v1.5
+
+  slackcrawler:
+    hostname: slackcrawler
+    restart: always
+    image: ghcr.io/startmunich/slackcrawler:latest
+    depends_on:
+      - vectordb_sync
+      - neo4j
+      - redis
+    environment:
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: redbull_wildberry
 
   slackbot:
     hostname: slackbot
@@ -162,12 +185,24 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997
-      INFINITY_MODEL: BAAI/bge-small-en
+      INFINITY_MODEL: BAAI/bge-large-en-v1.5
       SLACK_APP_TOKEN: $SLACK_APP_TOKEN
       SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
       REPLICATE_API_TOKEN: $REPLICATE_API_TOKEN
-      LLM_MODEL: mistralai/mistral-7b-instruct-v0.2:79052a3adbba8116ebc6697dcba67ad0d58feff23e7aeb2f103fc9aa545f9269
+      LLM_MODEL: mistralai/mixtral-8x7b-instruct-v0.1:2b56576fcfbe32fa0526897d8385dd3fb3d36ba6fd0dbe033c72886b81ade93e
 
+  meilisearch:
+    hostname: meilisearch
+    image: getmeili/meilisearch:v0.25.2
+    environment:
+      - MEILI_MASTER_KEY=redbull_blueberry
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_ENV=production
+      - MEILI_DB_PATH=data.ms
+    volumes:
+      - ./data.ms:/data.ms
+      - "$HOME/startgpt/meilisearch/data.ms:/data.ms"
+    restart: unless-stopped
 volumes:
   letsencrypt:
     name: letsencrypt

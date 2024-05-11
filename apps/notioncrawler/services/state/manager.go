@@ -37,6 +37,13 @@ func (m *Manager) UpdateInQueue(inQueue uint64) *Manager {
 	return m
 }
 
+func (m *Manager) UpdateCacheMisses(cacheMisses uint64) *Manager {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	m.state.CacheMisses = cacheMisses
+	return m
+}
+
 func (m *Manager) UpdateProcessed(processed uint64) *Manager {
 	m.lock.Lock()
 	defer m.lock.Unlock()

@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/meilisearch/meilisearch-go"
 	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"log"
 	"notioncrawl/services/state"
 	"notioncrawl/services/vector_queue"
+	"strings"
 )
 
 type Neo4jOptions struct {
@@ -22,6 +24,7 @@ type Crawler struct {
 	state             *state.Manager
 	db                neo4j.DriverWithContext
 	vectorQueue       *vector_queue.VectorQueue
+	meiliPageIndex    *meilisearch.Index
 	options           *Options
 	queue             []*CrawlQueueEntry
 	done              []*CrawlQueueEntry
@@ -35,7 +38,7 @@ var defaultOptions = &Options{
 	ForceUpdateIds: []string{},
 }
 
-func New(stateMgr *state.Manager, neo4jOptions Neo4jOptions, vectorQueue *vector_queue.VectorQueue, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
+func New(stateMgr *state.Manager, neo4jOptions Neo4jOptions, vectorQueue *vector_queue.VectorQueue, meiliIndex *meilisearch.Index, startPageId string, metaCrawler MetaCrawler, contentCrawler ContentCrawler, workspaceExporter WorkspaceExporter, options *Options) *Crawler {
 	if options == nil {
 		options = defaultOptions
 	}
@@ -54,6 +57,7 @@ func New(stateMgr *state.Manager, neo4jOptions Neo4jOptions, vectorQueue *vector
 		db:                driver,
 		state:             stateMgr,
 		vectorQueue:       vectorQueue,
+		meiliPageIndex:    meiliIndex,
 		options:           options,
 		metaCrawler:       metaCrawler,
 		contentCrawler:    contentCrawler,
@@ -127,17 +131,20 @@ func (s *Crawler) shouldForceUpdate(pageId string) bool {
 	return false
 }
 
-func (s *Crawler) CrawlNext() error {
+func (s *Crawler) CrawlNext() (*CrawlNextResult, error) {
+	result := &CrawlNextResult{
+		CacheMiss: false,
+	}
 	queueEntry, err := s.dequeue()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	log.Println(fmt.Sprintf("[info] Id: %s", queueEntry.PageID))
 
 	page, err := s.metaCrawler.CrawlMeta(queueEntry.PageID, queueEntry.ParentID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Println(fmt.Sprintf("[info] Url: %s", page.Url))
 
@@ -145,15 +152,16 @@ func (s *Crawler) CrawlNext() error {
 	cachedPage := GetCachedPage(s.db, queueEntry.PageID)
 	if cachedPage == nil || cachedPage.Hash != page.Hash || s.shouldForceUpdate(queueEntry.PageID) {
 		log.Println("[info] Cache MISS")
+		result.CacheMiss = true
 
 		content, err := s.contentCrawler.CrawlContent(page.PageID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		page.CrawlResult = content
 
 		if err := UpdateCache(s.db, page, s.id); err != nil {
-			return err
+			return nil, err
 		}
 
 		log.Println("[info] Enqueue for vector db")
@@ -163,6 +171,19 @@ func (s *Crawler) CrawlNext() error {
 			},
 		}); err != nil {
 			fmt.Errorf("[error] Failed to enqueue: %v", err)
+		}
+
+		log.Println("[info] Add to meilisearch")
+		var meiliContents []string
+		for _, crawlContent := range page.CrawlResult.Contents {
+			meiliContents = append(meiliContents, crawlContent.String())
+		}
+		meiliContentJoined := strings.Join(meiliContents, "\n")
+
+		if _, err := s.meiliPageIndex.AddDocuments([]map[string]interface{}{
+			{"id": page.PageID, "url": page.Url, "content": meiliContentJoined},
+		}); err != nil {
+			fmt.Errorf("[error] Failed to add to meilisearch: %v", err)
 		}
 
 		childPageIds = page.CrawlResult.Children
@@ -180,7 +201,7 @@ func (s *Crawler) CrawlNext() error {
 		})
 	}
 
-	return nil
+	return result, nil
 }
 
 func (s *Crawler) PerformFullBaseExport() error {

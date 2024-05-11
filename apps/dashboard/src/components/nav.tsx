@@ -18,7 +18,7 @@ interface NavProps {
     label?: string;
     icon: LucideIcon;
     href: string;
-    variant: "default" | "ghost";
+    isSelected: boolean;
   }[];
 }
 
@@ -36,9 +36,9 @@ export function Nav({ links, isCollapsed }: NavProps) {
                 <Link
                   href="#"
                   className={cn(
-                    buttonVariants({ variant: link.variant, size: "icon" }),
+                    buttonVariants({ variant: link.isSelected ? "default" : "ghost", size: "icon" }),
                     "h-9 w-9",
-                    link.variant === "default" &&
+                    link.isSelected &&
                       "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white",
                   )}
                 >
@@ -60,8 +60,8 @@ export function Nav({ links, isCollapsed }: NavProps) {
               key={index}
               href={link.href}
               className={cn(
-                buttonVariants({ variant: link.variant, size: "sm" }),
-                link.variant === "default" &&
+                buttonVariants({ variant: link.isSelected ? "default" : "ghost", size: "sm" }),
+                link.isSelected &&
                   "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white",
                 "justify-start",
               )}
@@ -72,7 +72,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                 <span
                   className={cn(
                     "ml-auto",
-                    link.variant === "default" &&
+                    link.isSelected &&
                       "text-background dark:text-white",
                   )}
                 >

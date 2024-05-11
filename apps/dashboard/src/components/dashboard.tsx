@@ -1,5 +1,5 @@
 "use client";
-import { File, Inbox, Package, ScanSearch } from "lucide-react";
+import { Bolt, Package, ScanSearch } from "lucide-react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   ResizableHandle,
@@ -11,10 +11,11 @@ import { Separator } from "@radix-ui/react-select";
 import { Nav } from "./nav";
 import { cn } from "@/lib/utils";
 import { useContext } from "react";
-import CrawlerContext from "@/context/crawlerContext";
+import AppStateContext from "@/context/appStateContext";
+import { usePathname } from "next/navigation";
 
 interface DashboardProps {
-  crawler: {
+  selectableCrawler: {
     label: string;
     name: string;
     icon: React.ReactNode;
@@ -24,11 +25,12 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  crawler,
+  selectableCrawler,
   defaultLayout,
   children,
 }: DashboardProps) {
-  const crawlerState = useContext(CrawlerContext);
+  const { crawler, pageCount } = useContext(AppStateContext);
+  const pathname = usePathname();
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -39,7 +41,7 @@ export default function Dashboard({
             sizes,
           )}`;
         }}
-        className="h-full max-h-[800px] items-stretch"
+        className="h-[100vh] items-stretch"
       >
         <ResizablePanel
           defaultSize={defaultLayout[0]}
@@ -47,12 +49,8 @@ export default function Dashboard({
           minSize={15}
           maxSize={20}
         >
-          <div
-            className={cn(
-              "flex h-[52px] items-center justify-center px-2",
-            )}
-          >
-            <CrawlerSwitcher isCollapsed={false} crawler={crawler} />
+          <div className={cn("flex h-[52px] items-center justify-center px-2")}>
+            <CrawlerSwitcher isCollapsed={false} crawler={selectableCrawler} />
           </div>
           <Separator />
           <Nav
@@ -61,23 +59,30 @@ export default function Dashboard({
               {
                 title: "Crawler",
                 href: "/crawler",
-                label: crawlerState.isRunning ? "Running" : "Stopped",
+                label: crawler.isRunning ? "Running" : "Stopped",
                 icon: ScanSearch,
-                variant: "default",
+                isSelected: pathname === "/crawler",
               },
               {
-                title: "Backup",
-                href: "/backup",
-                label: "20.000",
+                title: "Workspace",
+                href: "/workspace",
+                label: pageCount.count.toString(),
                 icon: Package,
-                variant: "ghost",
+                isSelected: pathname === "/workspace",
+              },
+              {
+                title: "Manage",
+                href: "/manage",
+                label: "",
+                icon: Bolt,
+                isSelected: pathname === "/manage",
               },
             ]}
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-            {children}
+          {children}
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>

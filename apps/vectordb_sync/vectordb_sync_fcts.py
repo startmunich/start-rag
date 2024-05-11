@@ -56,6 +56,7 @@ def notion_to_qdrant(id_to_process) -> None:
         
         record = result.single()
         
+        
         record_content = record.get("content")
         content = json.loads(record_content)
 
@@ -193,4 +194,76 @@ def slack_to_qdrant(id_to_process):
     # 3. see if concatenation of some messages is necessary depending on their length
     # 4. embedd content with infinity
     # 5. insert into qdrant
-    pass
+    id_to_process = f'{id_to_process}'
+    with neo4j_driver.session() as session:
+        result = session.run(
+            "MATCH (n:CrawledPage {page_id: $id}) RETURN n.content AS content",
+            id=id_to_process,
+        )
+
+        # check if result is empty, then throw error
+        if result.peek() is None:
+            raise ValueError("No result found for id_to_process")
+        
+        record = result.single()
+        
+        record_content = record.get("content") # should be string?
+        content = str(record_content)
+
+        
+
+
+        complete_content = []
+
+
+        complete_content += text_splitter.split_text(text=content)
+
+        # check if complete_content is empty, then throw error
+        if len(complete_content) == 0:
+            # stop function if no complete_content is found
+            raise ValueError("No complete_content found")
+
+            
+        # lower the case of the chunks in chunks
+        chunks = [chunk.lower() for chunk in complete_content]
+
+        
+
+
+        # Embed the chunks using Infinity
+
+        
+        chunks_embedded = [requests.post(url=f"{infinity_api_url}/embeddings", json={"model": f"{infinity_model}", "input":[chunk]}).json()["data"][0]["embedding"] for chunk in chunks]
+        print("embeddings created successful")
+
+        
+        
+        
+
+        # delete all points created from slack messages
+        qdrant_client.delete(collection_name=qdrant_collection_name,     
+                            points_selector=FilterSelector(
+                                filter=Filter(
+                                    must=[
+                                        FieldCondition(
+                                            key="type",
+                                            match=MatchValue(value="slack"),
+                                        ),
+                                    ],
+                                )
+                            ),
+                            )
+
+        # Insert the preprocessed chunk into Qdrant
+        
+        points_to_update = [PointStruct(id=str(uuid.uuid4()), 
+                                        vector=chunk_embedding,
+                                        payload={"content": chunk, "page_id": id_to_process, "type": "slack"}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
+        
+        
+        
+
+        qdrant_client.upsert(
+            collection_name=qdrant_collection_name,
+            points= points_to_update
+            )

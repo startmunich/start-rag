@@ -8,6 +8,8 @@ from langchain_community.vectorstores.qdrant import Qdrant
 from qdrant_client import QdrantClient
 from langchain_community.embeddings import InfinityEmbeddings
 from langchain import hub
+from datetime import date
+
 
 
 
@@ -15,7 +17,7 @@ from langchain import hub
 # Load and export the environment variables
 # load_dotenv(dotenv_path="apps/slackbot/.env.local")
 
-
+# trigger new build
 
 # REPLICATE_API_TOKEN  = os.environ["REPLICATE_API_KEY"]
 qdrant_uri = os.environ["QDRANT_URL"]
@@ -35,53 +37,69 @@ qdrant_db = Qdrant(
 )
 
 # Create the retriever
-retriever = qdrant_db.as_retriever(search_type = "mmr", search_kwargs={"k": 5, "fetch_k": 20})
+retriever = qdrant_db.as_retriever(search_kwargs={"k": 5})
 
 # Create the language model
 llm = Replicate(
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
     model=llm_model,
-    model_kwargs={"temperature": 0.75, "max_length": 1500, "top_p": 0.2, "top_k": 7, "max_new_tokens": 200,
+    model_kwargs={"temperature": 0.2, "max_length": 1500, "top_p": 0.9, "top_k": 50, "max_new_tokens": 400,
         "min_new_tokens": 20, "repetition_penalty": 0.1},
     verbose = False
 )
 
+
+
 # Create the prompt template
 prompt_template = """ [INST]
-You are StartGPT, an assistant for question-answering tasks. Users reach out to you only via Slack. You serve a student led organization START Munich. 
-The context you get will be from our Notionpage. Use the following pieces of retrieved context to answer the question.
-Give a short summary of about 2-3 sentences about the context and then answer the question. Do not repeat the question in the answer.
-If you don't know the answer, just say that you don't know.
-Here's the question and the context:
-
-<Beginning of question>
-{question}
-<End of question>
+You are StartGPT, an assistant for question-answering tasks.
+The context you get will be from our Notion and Slack. Summarize the context and answer the question.
 
 <Beginning of context>
 {context} 
 <End of context>
+
+<Beginning of question>
+{question}
+<End of question>
 [INST]
 """
 
 # Initialize prompt
 prompt_template = PromptTemplate(input_variables=["question", "context"], template=prompt_template)
 
-prompt = hub.pull("rlm/rag-prompt")
+# prompt = hub.pull("rlm/rag-prompt")
 
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    retriever=retriever,
-    chain_type_kwargs={"prompt": prompt_template},
-    verbose=False
-)
+# qa_chain = RetrievalQA.from_chain_type(
+#     llm=llm,
+#     retriever=retriever,
+#     chain_type_kwargs={"prompt": prompt_template},
+#     verbose=False
+# )
+def format_docs(docs):
+    context = ""
+    for index, doc in enumerate(docs):
+        context += f"Document Rank {index + 1}: {doc.page_content}\n\n"
+    return context
 
 # create function to invoke the retrievalQA
 def get_answer(query: str) -> str:
     
-    response = qa_chain.invoke({'query': query})
-    return response["result"]
+    docs = retriever.invoke(query)
+
+    # create string of all the documents
+    
+    context = format_docs(docs)
+
+    # enter context into the prompt
+
+    prompt = prompt_template.format(context=context, question=query)
+
+    response = llm.invoke(prompt)
+    # print(f"Retrieved docs: {docs}\n Retrieved context: {context}\n Generated response: {response}")
+
+    return f"Retrieved context: {context}\n Generated response: {response}"
 
 
 

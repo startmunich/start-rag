@@ -4,6 +4,7 @@ export interface CrawlerState {
     isRunning: boolean;
     inQueue: number;
     processed: number;
+    cacheMisses: number;
     lastRunDuration: number;
     lastRunStartedAt: number;
     lastRunEndedAt: number;
@@ -15,6 +16,7 @@ export default function useCrawlerState(basePath: string): CrawlerState {
         isRunning: false,
         inQueue: 0,
         processed: 0,
+        cacheMisses: 0,
         lastRunDuration: 0,
         lastRunStartedAt: 0,
         lastRunEndedAt: 0,
@@ -22,11 +24,14 @@ export default function useCrawlerState(basePath: string): CrawlerState {
     });
 
     useEffect(() => {
-        const timeout = setInterval(async () => {
+        const updateState = async () => {
             const result = await fetch(`${basePath}/state`);
             const newState = await (result.json() as Promise<CrawlerState>);
             setState(newState);
-        }, 3000);
+        };
+
+        const timeout = setInterval(updateState, 3000);
+        updateState();
 
         return () => clearInterval(timeout);
     }, [basePath]);

@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 
 services:
   qdrant:
@@ -10,7 +10,7 @@ services:
   infinity:
     image: "michaelf34/infinity"
     hostname: infinity
-    command: --model-name-or-path BAAI/bge-small-en-v1.5
+    command: --model-name-or-path BAAI/bge-large-en-v1.5
     ports:
       - "7997:7997"
 
@@ -28,8 +28,8 @@ services:
     restart: always
     image: neo4j:5.17
     volumes:
-      - '$HOME/startgpt/neo4j/data:/data'
-      - '$HOME/startgpt/neo4j/conf/:/conf/'
+      - "$HOME/startgpt/neo4j/data:/data"
+      - "$HOME/startgpt/neo4j/conf/:/conf/"
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -57,7 +57,10 @@ services:
       NEO4J_USER: neo4j
       NEO4J_PASS: redbull_wildberry
       VECTOR_QUEUE_URL: http://vectordb_sync:5000
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_API_TOKEN: redbull_blueberry
       CORS: "*"
+      PORT: 8000
     env_file:
       - .env
       - .env.local
@@ -68,6 +71,25 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
+
+  slackcrawler:
+    hostname: slackcrawler
+    platform: "linux/amd64"
+    restart: always
+    build:
+      context: ./apps/slackcrawler
+      dockerfile: Dockerfile
+    depends_on:
+      - vectordb_sync
+      - neo4j
+      - redis
+    environment:
+      NEO4J_URL: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASS: redbull_wildberry
+    env_file:
+      - .env
+      - .env.local
 
   vectordb_sync:
     hostname: vectordb_sync
@@ -90,7 +112,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997
-      INFINITY_MODEL: bge-small-en-v1.5
+      INFINITY_MODEL: BAAI/bge-large-en-v1.5
     env_file:
       - .env
       - .env.local
@@ -108,7 +130,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION_NAME: startgpt
       INFINITY_URL: http://infinity:7997
-      INFINITY_MODEL: BAAI/bge-small-en-v1.5
+      INFINITY_MODEL: BAAI/bge-large-en-v1.5
     env_file:
       - .env
       - .env.local
@@ -127,4 +149,19 @@ services:
       NEO4J_PASS: redbull_wildberry
     env_file:
       - .env
+
+  meilisearch:
+    hostname: meilisearch
+    image: getmeili/meilisearch:v0.25.2
+    environment:
+      - MEILI_MASTER_KEY=redbull_blueberry
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_ENV=production
+      - MEILI_DB_PATH=data.ms
+    ports:
+      - 7700:7700
+    volumes:
+      - ./data.ms:/data.ms
+      - "$HOME/startgpt/meilisearch/data.ms:/data.ms"
+    restart: unless-stopped
 
