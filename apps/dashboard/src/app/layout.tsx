@@ -2,7 +2,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Dashboard from "@/components/dashboard";
-import { NotionLogoIcon } from "@radix-ui/react-icons";
+import { ChatBubbleIcon } from "@radix-ui/react-icons";
 import AppStateContext from "@/context/appStateContext";
 import useAppState from "@/hooks/useAppState";
 
@@ -10,12 +10,10 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const crawler = [
   {
-    label: "START Notion",
-    name: "START Notion",
-    icon: (
-      <NotionLogoIcon className="w-5 h-5" />
-    ),
-  }
+    label: "START RAG",
+    name: "START RAG",
+    icon: <ChatBubbleIcon />,
+  },
 ];
 
 export default function RootLayout({

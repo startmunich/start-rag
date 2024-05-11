@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { LucideIcon } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -10,13 +8,14 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import { buttonVariants } from "./ui/button";
+import { ReactNode } from "react";
 
 interface NavProps {
   isCollapsed: boolean;
   links: {
     title: string;
     label?: string;
-    icon: LucideIcon;
+    icon: ReactNode;
     href: string;
     isSelected: boolean;
   }[];
@@ -36,13 +35,18 @@ export function Nav({ links, isCollapsed }: NavProps) {
                 <Link
                   href="#"
                   className={cn(
-                    buttonVariants({ variant: link.isSelected ? "default" : "ghost", size: "icon" }),
+                    buttonVariants({
+                      variant: link.isSelected ? "default" : "ghost",
+                      size: "icon",
+                    }),
                     "h-9 w-9",
                     link.isSelected &&
                       "dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white",
                   )}
                 >
-                  <link.icon className="h-4 w-4" />
+                  <div className="h-4 w-4 overflow-hidden mr-2">
+                    {link.icon}
+                  </div>
                   <span className="sr-only">{link.title}</span>
                 </Link>
               </TooltipTrigger>
@@ -60,20 +64,22 @@ export function Nav({ links, isCollapsed }: NavProps) {
               key={index}
               href={link.href}
               className={cn(
-                buttonVariants({ variant: link.isSelected ? "default" : "ghost", size: "sm" }),
+                buttonVariants({
+                  variant: link.isSelected ? "default" : "ghost",
+                  size: "sm",
+                }),
                 link.isSelected &&
                   "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white",
                 "justify-start",
               )}
             >
-              <link.icon className="mr-2 h-4 w-4" />
+              <div className="h-4 w-4 overflow-hidden mr-2">{link.icon}</div>
               {link.title}
               {link.label && (
                 <span
                   className={cn(
                     "ml-auto",
-                    link.isSelected &&
-                      "text-background dark:text-white",
+                    link.isSelected && "text-background dark:text-white",
                   )}
                 >
                   {link.label}

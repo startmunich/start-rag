@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useContext } from "react";
 import AppStateContext from "@/context/appStateContext";
 import { usePathname } from "next/navigation";
+import { NotionLogoIcon } from "@radix-ui/react-icons";
 
 interface DashboardProps {
   selectableCrawler: {
@@ -60,21 +61,21 @@ export default function Dashboard({
                 title: "Crawler",
                 href: "/crawler",
                 label: crawler.isRunning ? "Running" : "Stopped",
-                icon: ScanSearch,
+                icon: <ScanSearch className="h-4 w-4" />,
                 isSelected: pathname === "/crawler",
               },
               {
-                title: "Workspace",
-                href: "/workspace",
+                title: "Notion",
+                href: "/notion",
                 label: pageCount.count.toString(),
-                icon: Package,
-                isSelected: pathname === "/workspace",
+                icon: <NotionLogoIcon className="w-4 h-4" />,
+                isSelected: pathname === "/notion",
               },
               {
                 title: "Manage",
                 href: "/manage",
                 label: "",
-                icon: Bolt,
+                icon: <Bolt className="h-4 w-4" />,
                 isSelected: pathname === "/manage",
               },
             ]}
