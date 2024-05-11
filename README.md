@@ -15,3 +15,4 @@ https://miro.com/app/board/uXjVNbPVucY=/?share_link_id=128187300568
 |-----------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | Crawler Monitor | [https://monitor.start-rag.startmunich.de/](https://monitor.start-rag.startmunich.de/) | A monitoring tool for our crawlers, providing real-time data and maintenance tools. |
 | Portainer       | [https://168.119.118.183:9443](https://168.119.118.183:9443)                 | A comprehensive management UI for our Docker Containers, simplifying container deployment and operations. |
+| Metrics(InfluxDb) | [https://influx.start-rag.startmunich.de](https://influx.start-rag.startmunich.de)            | A Dashboard that gives you metric insights into the RAG System |
