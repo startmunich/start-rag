@@ -36,7 +36,7 @@ def load_web():
         "https://www.futurepynk.com/theroyaljungle",
         "https://www.futurepynk.com/hamburg",
         "https://www.futurepynk.com/munich",
-        "https://www.futurepynk.com/berlin",
+        "https://www.futurepynk.com/berlin"
     ]
 
     # Initialize loader with urls, load docs
