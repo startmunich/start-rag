@@ -31,7 +31,7 @@ qdrant_db = Qdrant(
     client=QdrantClient(url=qdrant_uri, port=6333),
     collection_name=qdrant_collection_name,
     content_payload_key="content",
-    metadata_payload_key=None,
+    metadata_payload_key="metadata",
     distance_strategy="Cosine",
     embeddings=InfinityEmbeddings(model=infinity_model, infinity_api_url=infinity_api_url)
 )
@@ -80,7 +80,7 @@ prompt_template = PromptTemplate(input_variables=["question", "context"], templa
 def format_docs(docs):
     context = ""
     for index, doc in enumerate(docs):
-        context += f"Document Rank {index + 1}: {doc.page_content}\n\n"
+        context += f"Document Rank {index + 1}. Source: https://www.notion.so/{doc.metadata['page_id']}. Content: {doc.page_content}\n\n"
     return context
 
 # create function to invoke the retrievalQA

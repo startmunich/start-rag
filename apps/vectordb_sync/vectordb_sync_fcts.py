@@ -113,7 +113,7 @@ def notion_to_qdrant(id_to_process) -> None:
         
         points_to_update = [PointStruct(id=str(uuid.uuid4()), 
                                         vector=chunk_embedding,
-                                        payload={"content": chunk, "page_id": id_to_process, "type": "notion"}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
+                                        payload={"content": chunk, "metadata":{"page_id": id_to_process, "type": "notion"}}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
         
         
 
@@ -179,7 +179,7 @@ def web_to_qdrant(id_to_process):
         # Insert the preprocessed chunk into Qdrant
         points_to_update = [PointStruct(id=str(uuid.uuid4()),
                                         vector=chunk_embedding,
-                                        payload={"content": chunk, "page_id": id_to_process, "type": "web"}) for
+                                        payload={"content": chunk, "metadata":{"page_id": id_to_process, "type": "web"}}) for
                             chunk_embedding, chunk in zip(chunks_embedded, chunks)]
         
         qdrant_client.upsert(
@@ -258,7 +258,7 @@ def slack_to_qdrant(id_to_process):
         
         points_to_update = [PointStruct(id=str(uuid.uuid4()), 
                                         vector=chunk_embedding,
-                                        payload={"content": chunk, "page_id": id_to_process, "type": "slack"}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
+                                        payload={"content": chunk, "metadata":{"page_id": id_to_process, "type": "slack"}}) for chunk_embedding, chunk in zip(chunks_embedded, chunks)]
         
         
         
