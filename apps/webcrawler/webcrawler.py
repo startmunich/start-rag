@@ -24,7 +24,7 @@ while True:
 
 def load_web():
     logger.info("load_web")
-
+    print(f"Loading of webpages started")
     # Initialize urls to parse
     urls = [
         "https://www.startmunich.de",
@@ -46,12 +46,14 @@ def load_web():
     # Process raw HTML docs to text docs
     html2text = Html2TextTransformer()
     docs = html2text.transform_documents(docs)
+    print(f"Loading of webpages finished")
     logger.info("load_web finished")
     return docs
 
 
 def write_db():
     logger.info(f"start writing web_data")
+    print(f"Start writing web_data to neo4j")
 
     docs = load_web()
     # write each page into the neo4J database using the url as the id
@@ -76,13 +78,15 @@ def write_db():
                 content=page.page_content
             )
         logger.info(f"page: " + page.metadata.get("source") + " added to neo4j")
+        print(f"page: " + page.metadata.get("source") + " added to neo4j")
 
-        # send post request to '/enqueue_slack' endpoint with message_id
-        # to add the message to the queue
+        # send post request to '/enqueue_web' endpoint with web_ids
+        # to add the webpage to the queue
         # cf. vectordb_sync/vectordb_sync.py
 
-    requests.post("http://vectordb_sync:5000/enqueue_slack", json={"ids": web_ids})
+    requests.post("http://vectordb_sync:5000/enqueue_web", json={"ids": web_ids})
     logger.info(f"adding web_ids: to queue")
+    print(f"adding web_ids: to queue")
 
 
 if __name__ == '__main__':
