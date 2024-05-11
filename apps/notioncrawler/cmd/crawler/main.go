@@ -150,10 +150,13 @@ func main() {
 			}
 
 			startItem := time.Now()
-			res, err := crawlerInstance.CrawlNext()
-			if err != nil {
+			didFail := false
+			wasCacheMiss := false
+			if res, err := crawlerInstance.CrawlNext(); err != nil {
+				didFail = true
 				log.Println(err.Error())
 			} else if res.CacheMiss {
+				wasCacheMiss = true
 				cacheMisses += 1
 			}
 			elapsedItem := time.Since(startItem)
@@ -163,7 +166,8 @@ func main() {
 				AddField("processed", processed).
 				AddField("cacheMisses", cacheMisses).
 				AddField("timeElapsed", time.Since(start).Milliseconds()).
-				AddField("wasCacheMiss", res.CacheMiss).
+				AddField("wasCacheMiss", wasCacheMiss).
+				AddField("didFail", didFail).
 				AddField("itemCrawlDuration", elapsedItem.Milliseconds()).
 				SetTime(time.Now())); err != nil {
 				log.Println("Failed to write influxdb point")
