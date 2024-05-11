@@ -13,6 +13,7 @@ import (
 	"notioncrawl/services/crawler/workspace_exporter/unofficial_workspace_exporter"
 	"notioncrawl/services/notion"
 	"notioncrawl/services/state"
+	"notioncrawl/services/utils/run_mgr"
 	"notioncrawl/services/vector_queue"
 	"os"
 	"strconv"
@@ -90,8 +91,9 @@ func main() {
 	})
 
 	stateMgr := state.New()
+	runMgr := run_mgr.New()
 
-	go api.Run(stateMgr, neo4jOptions, meiliIndex, vectorQueue, fmt.Sprintf(":%s", port), corsDomains)
+	go api.Run(stateMgr, runMgr, neo4jOptions, meiliIndex, vectorQueue, fmt.Sprintf(":%s", port), corsDomains)
 
 	println("Waiting for Vector Queue ...")
 	vectorQueue.WaitForReady()
@@ -104,6 +106,7 @@ func main() {
 
 	for {
 		start := time.Now()
+		runMgr.Reset()
 		log.Printf("Starting Notioncrawler")
 		if err := influxWriteAPI.WritePoint(context.Background(), influxdb2.NewPointWithMeasurement("notion_crawler_started").
 			SetTime(time.Now())); err != nil {
@@ -127,7 +130,14 @@ func main() {
 
 		processed := uint64(0)
 		cacheMisses := uint64(0)
+		wasCanceled := false
 		for crawlerInstance.HasNext() {
+			if runMgr.ShouldCancel() {
+				log.Println(fmt.Sprintf("Run Canceled!"))
+				wasCanceled = true
+				break
+			}
+
 			log.Println(fmt.Sprintf("Queue Size: %d", crawlerInstance.QueueSize()))
 			stateMgr.UpdateInQueue(uint64(crawlerInstance.QueueSize())).UpdateProcessed(processed).UpdateCacheMisses(cacheMisses)
 
@@ -167,6 +177,7 @@ func main() {
 			AddField("processed", processed).
 			AddField("cacheMisses", cacheMisses).
 			AddField("timeElapsed", elapsed).
+			AddField("wasCanceled", wasCanceled).
 			SetTime(time.Now())); err != nil {
 			log.Println("Failed to write influxdb point")
 		}

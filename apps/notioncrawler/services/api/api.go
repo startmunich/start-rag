@@ -12,17 +12,18 @@ import (
 	"notioncrawl/services/api/controller"
 	"notioncrawl/services/crawler"
 	"notioncrawl/services/state"
+	"notioncrawl/services/utils/run_mgr"
 	"notioncrawl/services/vector_queue"
 	"time"
 )
 
-func Run(state *state.Manager, neo4jOptions crawler.Neo4jOptions, meiliIndex *meilisearch.Index, vectorQueue *vector_queue.VectorQueue, addr string, corsDomains string) {
+func Run(state *state.Manager, runMgr *run_mgr.RunMgr, neo4jOptions crawler.Neo4jOptions, meiliIndex *meilisearch.Index, vectorQueue *vector_queue.VectorQueue, addr string, corsDomains string) {
 	neo4jdriver, err := neo4j.NewDriverWithContext(neo4jOptions.Address, neo4j.BasicAuth(neo4jOptions.Username, neo4jOptions.Password, ""))
 	if err != nil {
 		panic(err)
 	}
 
-	ctrl := controller.New(neo4jdriver, meiliIndex, vectorQueue)
+	ctrl := controller.New(neo4jdriver, meiliIndex, vectorQueue, runMgr)
 
 	app := fiber.New()
 
