@@ -86,6 +86,13 @@ def empty_redis():
     redis.delete('content_queue')
     return jsonify({"message": "Redis queue cleared"}), 200
 
+@app.route('/redis_lenght', methods=['POST'])
+def redis_lenght():
+    len = redis.llen('content_queue')
+    return jsonify({"message": len}), 200
+
+
+
 
 @app.route('/enqueue', methods=['POST']) # rename to enqueue_notion together with notion_Crwaler
 def enqueue_ids():
