@@ -91,7 +91,10 @@ def redis_length():
     len = redis.llen('content_queue')
     return jsonify({"message": len}), 200
 
-
+@app.route('/empty_qdrant', methods=['POST'])
+def empty_qdrant():
+    qdrant_client.delete_collection(collection_name=qdrant_collection_name)
+    return jsonify({"message": "Qdrant collection cleared"}), 200
 
 
 @app.route('/enqueue', methods=['POST']) # rename to enqueue_notion together with notion_Crwaler
