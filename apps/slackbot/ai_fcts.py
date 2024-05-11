@@ -80,7 +80,10 @@ prompt_template = PromptTemplate(input_variables=["question", "context"], templa
 def format_docs(docs):
     context = ""
     for index, doc in enumerate(docs):
-        context += f"Document Rank {index + 1}. Source: https://www.notion.so/{doc.metadata['page_id']}. Content: {doc.page_content}\n\n"
+        if doc.metadata['type'] == 'notion:':
+            context += f"Document Rank {index + 1}. Source: https://www.notion.so/{doc.metadata['page_id']}. Content: {doc.page_content}\n\n"
+        else:
+            context += f"Document Rank {index + 1}. Source: {doc.metadata['type']}. Content: {doc.page_content}\n\n"
     return context
 
 # create function to invoke the retrievalQA
