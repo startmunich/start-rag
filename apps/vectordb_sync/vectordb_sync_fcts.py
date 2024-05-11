@@ -158,8 +158,7 @@ def web_to_qdrant(id_to_process):
 
         # Embed the chunks using Infinity
         chunks_embedded = [requests.post(url=f"{infinity_api_url}/embeddings",
-                                         json={"model": f"{infinity_model}", "input": [chunk]}).json()["data"][0][
-                               "embedding"] for chunk in chunks]
+                                         json={"model": f"{infinity_model}", "input": [chunk]}).json()["data"][0]["embedding"] for chunk in chunks]
         print("embeddings for web_to_qdrant created successful")
 
         # delete all points created from web pages
