@@ -37,14 +37,14 @@ qdrant_db = Qdrant(
 )
 
 # Create the retriever
-retriever = qdrant_db.as_retriever(search_kwargs={"k": 5})
+retriever = qdrant_db.as_retriever(search_kwargs={"k": 3})
 
 # Create the language model
 llm = Replicate(
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
     model=llm_model,
-    model_kwargs={"temperature": 0.2, "max_length": 1500, "top_p": 0.9, "top_k": 50, "max_new_tokens": 400,
+    model_kwargs={"temperature": 0.1, "max_length": 1500, "top_p": 0.9, "top_k": 50, "max_new_tokens": 400,
         "min_new_tokens": 20, "repetition_penalty": 0.1},
     verbose = False
 )
@@ -54,8 +54,9 @@ llm = Replicate(
 # Create the prompt template
 prompt_template = """ [INST]
 You are StartGPT, an assistant for question-answering tasks.
-The context you get will be from our Notion, Website and Slack. Summarize the context and answer the question.
-If you utilize Notion context to answer the question, please provide the source link in your answer.
+The context you get will be from our Notion, Website and Slack. Use this context to answer the question.
+If you utilize context from Notion to answer the question, please provide the source link in your answer.
+If you utilize context from slack or the website, do not provide a link.
 
 <Beginning of context>
 {context} 
