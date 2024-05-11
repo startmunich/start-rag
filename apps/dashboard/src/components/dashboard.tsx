@@ -1,5 +1,5 @@
 "use client";
-import { Bolt, Package, ScanSearch } from "lucide-react";
+import { Bolt, Package, ScanSearch, SlackIcon } from "lucide-react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import {
   ResizableHandle,
@@ -70,6 +70,13 @@ export default function Dashboard({
                 label: pageCount.count.toString(),
                 icon: <NotionLogoIcon className="w-4 h-4" />,
                 isSelected: pathname === "/notion",
+              },
+              {
+                title: "Slack Access",
+                href: "/slack-access",
+                label: "",
+                icon: <SlackIcon className="h-4 w-4" />,
+                isSelected: pathname === "/slack-access",
               },
               {
                 title: "Manage",
