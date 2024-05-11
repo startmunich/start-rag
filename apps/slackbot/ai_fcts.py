@@ -54,7 +54,8 @@ llm = Replicate(
 # Create the prompt template
 prompt_template = """ [INST]
 You are StartGPT, an assistant for question-answering tasks.
-The context you get will be from our Notion and Slack. Summarize the context and answer the question.
+The context you get will be from our Notion, Website and Slack. Summarize the context and answer the question.
+If you utilize Notion context to answer the question, please provide the source link in your answer.
 
 <Beginning of context>
 {context} 
@@ -102,7 +103,7 @@ def get_answer(query: str) -> str:
     response = llm.invoke(prompt)
     # print(f"Retrieved docs: {docs}\n Retrieved context: {context}\n Generated response: {response}")
 
-    return f"Retrieved context: {context}\n Generated response: {response}"
+    return f"Generated response: {response}"
 
 
 
