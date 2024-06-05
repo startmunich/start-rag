@@ -33,7 +33,7 @@ def crawl_and_store_data():
     
     # Crawl messages from specific Slack channels
     for channel_id in SLACK_CHANNELS:
-        response = slack_client.conversations_history(channel=channel_id, limit= 20)
+        response = slack_client.conversations_history(channel=channel_id, limit= 50)
         message_history = response['messages'] # list of messages
 
         message_ids = []
