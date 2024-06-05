@@ -52,7 +52,7 @@ services:
       - --log.level=DEBUG
 
   qdrant:
-    image: "qdrant/qdrant:v1.9.4"
+    image: "qdrant/qdrant:v1.8.4"
     hostname: qdrant
     expose:
       - "6333"
