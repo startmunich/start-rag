@@ -6,6 +6,8 @@ services:
     hostname: qdrant
     ports:
       - "6333:6333"
+    volumes:
+      - $HOME/startgpt/qdrant/data:/qdrant/storage
 
   infinity:
     image: "michaelf34/infinity"
