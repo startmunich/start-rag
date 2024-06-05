@@ -51,8 +51,17 @@ def format_docs(docs):
 
 # create function to invoke the retrievalQA
 def get_answer(query: str) -> str:
-    
-    docs = retriever.invoke(query)
+
+    enhanced_query = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": """You are an assistant to StartGPT, an assistant for question-answering tasks of the student initative STARTMunich and your job is to add more detailed inquiry to the questions provided by a user. Here are some information about the initiative: STARTMunich is a student led initiative empowering students and young founders on their entrepreneurial journey. They organize various events and hackathons to help students extend their network and follow up their dream of becoming a founder themselves. The main database used is Notion which contains most of the information regarding the members, events, an FAQ for often asked question and much more.
+            In the following you will get a question from one of the members of the initiative and should extend the question by adding more details to it like asking about a specific time frame, people involved, the location and current status so it can be querried better."""}, # <-- This is the system message that provides context to the model
+            {"role": "user", "content": f"""<Beginning of question> {query} <End of question>"""}  # <-- This is the user message for which the model will generate a response
+        ]
+    )
+    question = enhanced_query.choices[0].message.content
+    docs = retriever.invoke(question)
 
     # create string of all the documents
     
@@ -67,7 +76,7 @@ def get_answer(query: str) -> str:
             If you utilize context from Notion to answer the question, please provide the source link in your answer.
             If you utilize context from slack or the website, do not provide a link."""}, # <-- This is the system message that provides context to the model
             {"role": "user", "content": f"""<Beginning of context> {context} <End of context> \n
-            <Beginning of question> {query} <End of question>"""}  # <-- This is the user message for which the model will generate a response
+            <Beginning of question> {question} <End of question>"""}  # <-- This is the user message for which the model will generate a response
         ]
     )
     
