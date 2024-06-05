@@ -259,5 +259,5 @@ volumes:
     name: influxdb
   neo4j_data:
     name: neo4j_data
-  neo4j_config:
-    name: neo4j_config
+  neo4j_conf:
+    name: neo4j_conf
