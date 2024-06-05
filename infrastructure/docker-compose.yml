@@ -194,7 +194,7 @@ services:
       INFINITY_MODEL: BAAI/bge-large-en-v1.5
       SLACK_APP_TOKEN: $SLACK_APP_TOKEN
       SLACK_BOT_TOKEN: $SLACK_BOT_TOKEN
-      REPLICATE_API_TOKEN: $REPLICATE_API_TOKEN
+      OPENAI_KEY: $OPENAI_KEY
       LLM_MODEL: mistralai/mixtral-8x7b-instruct-v0.1:2b56576fcfbe32fa0526897d8385dd3fb3d36ba6fd0dbe033c72886b81ade93e
 
   webcrawler:
