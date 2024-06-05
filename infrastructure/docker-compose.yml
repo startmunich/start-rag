@@ -57,7 +57,7 @@ services:
     expose:
       - "6333"
     volumes:
-      - $HOME/startgpt/qdrant/data:/qdrant/storage
+      - qdrant:/qdrant/storage
 
   infinity:
     image: "michaelf34/infinity:0.0.39"
@@ -71,8 +71,8 @@ services:
     restart: always
     image: neo4j:5.17
     volumes:
-      - "$HOME/startgpt/neo4j/data:/data"
-      - "$HOME/startgpt/neo4j/conf/:/conf/"
+      - "neo4j_data:/data"
+      - "neo4j_conf:/conf/"
     expose:
       - "7474"
       - "7687"
@@ -219,8 +219,7 @@ services:
       - MEILI_ENV=production
       - MEILI_DB_PATH=data.ms
     volumes:
-      - ./data.ms:/data.ms
-      - "$HOME/startgpt/meilisearch/data.ms:/data.ms"
+      - meilisearch:/data.ms
     restart: unless-stopped
 
   influxdb:
@@ -234,7 +233,7 @@ services:
       - DOCKER_INFLUXDB_INIT_RETENTION=1w
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=$INFLUXDB_ADMIN_TOKEN
     volumes:
-      - $HOME/startgpt/influxdb:/var/lib/influxdb2:rw
+      - influxdb:/var/lib/influxdb2:rw
     labels:
       - traefik.enable=true
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
@@ -252,3 +251,13 @@ services:
 volumes:
   letsencrypt:
     name: letsencrypt
+  qdrant:
+    name: qdrant
+  meilisearch:
+    name: meilisearch
+  influxdb:
+    name: influxdb
+  neo4j_data:
+    name: neo4j_data
+  neo4j_config:
+    name: neo4j_config
