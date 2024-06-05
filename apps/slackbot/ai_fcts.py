@@ -104,7 +104,7 @@ def get_answer(query: str) -> str:
     response = llm.invoke(prompt)
     # print(f"Retrieved docs: {docs}\n Retrieved context: {context}\n Generated response: {response}")
 
-    return f"Generated response: {response}"
+    return f"{response}"
 
 
 
