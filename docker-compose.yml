@@ -73,11 +73,11 @@ services:
       INFLUXDB_BUCKET: startgpt
 
     dashboard:
-    build:
-      context: ./apps/dashboard
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
+      build:
+        context: ./apps/dashboard
+        dockerfile: Dockerfile.dev
+      ports:
+        - "3000:3000"
 
   slackcrawler:
     hostname: slackcrawler
