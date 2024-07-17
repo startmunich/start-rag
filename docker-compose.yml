@@ -53,7 +53,7 @@ services:
       - neo4j
       - influxdb
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       NEO4J_URL: bolt://neo4j:7687
       NEO4J_USER: neo4j
